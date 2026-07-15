@@ -1,0 +1,13 @@
+# /etc/systemd/system/pisti-autopull.service
+# One-shot unit run by pisti-autopull.timer: pull + restart if the deploy
+# branch moved. Logs to the journal (journalctl -u pisti-autopull).
+[Unit]
+Description=Pisti auto-deploy (git pull + restart on new commits)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=deniz
+WorkingDirectory=/home/deniz/pistiapp
+ExecStart=/home/deniz/pistiapp/deploy/autopull.sh

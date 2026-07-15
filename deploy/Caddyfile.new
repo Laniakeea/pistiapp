@@ -1,0 +1,44 @@
+# /etc/caddy/Caddyfile
+#
+# COMPLETE replacement Caddyfile: keeps the existing demo site and SewConnect
+# exactly as-is and only ADDS a /pisti route for the Pisti points keeper.
+#
+# !!! Before applying: `cat /etc/caddy/Caddyfile` on the server and confirm it
+# matches this file minus the @pisti block — if the live file has drifted,
+# re-derive this one from it instead of trusting this copy.
+
+# Shared config for every hostname the demo answers on: the site password
+# and the reverse proxy to the Node host. Add a hostname to the site line
+# below and it inherits all of this automatically.
+(resonate_site) {
+	encode zstd gzip
+
+	basic_auth {
+		copcatan $2a$14$7Cgq3.xPLthu702h5BVSgeBiEZGntPggCSEaz8xzi5O9S0GUauXQW
+	}
+
+	reverse_proxy 127.0.0.1:8787
+}
+
+# Primary domain (+ www) and the original sslip.io address all serve the
+# same site. Caddy auto-provisions a Let's Encrypt cert for each.
+resonateapp.online, www.resonateapp.online, 80-253-246-106.sslip.io {
+	# --- SewConnect, served under /sew with its own login (no basic_auth).
+	# Matches exactly /sew and anything under /sew/ (WebSocket upgrades included).
+	# handle takes a single matcher token, so use a named matcher for both paths.
+	@sew path /sew /sew/*
+	handle @sew {
+		reverse_proxy 127.0.0.1:8788
+	}
+
+	# --- NEW: Pisti points keeper under /pisti (no basic_auth, no accounts).
+	@pisti path /pisti /pisti/*
+	handle @pisti {
+		reverse_proxy 127.0.0.1:8789
+	}
+
+	# --- Existing demo site: everything else, unchanged.
+	handle {
+		import resonate_site
+	}
+}

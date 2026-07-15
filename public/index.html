@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <title>Pisti — Points Keeper</title>
+  <meta name="theme-color" content="#123B28">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div id="update-bar" hidden>
+    <span>✨ A new version is ready</span>
+    <button id="update-btn">Update</button>
+  </div>
+
+  <!-- ============ SETUP ============ -->
+  <section id="screen-setup" class="screen">
+    <div class="setup-scroll">
+      <header class="brand">
+        <div class="brand-cards" aria-hidden="true"><span class="bc bc-back"></span><span class="bc bc-front">♥</span></div>
+        <h1>Pisti</h1>
+        <p class="tagline">points keeper for table games</p>
+      </header>
+
+      <div id="resume-banner" class="paper-note" hidden>
+        <div class="rn-text">
+          <strong>Game in progress</strong>
+          <span id="resume-desc"></span>
+        </div>
+        <div class="rn-actions">
+          <button id="resume-btn" class="btn btn-primary">Resume</button>
+          <button id="discard-btn" class="btn btn-ghost">Discard</button>
+        </div>
+      </div>
+
+      <div class="paper-form">
+        <h2 class="ph">Pick a game</h2>
+        <div id="preset-grid" class="preset-grid"></div>
+
+        <div id="custom-editor" hidden>
+          <h2 class="ph">Custom bonus buttons</h2>
+          <div id="custom-rows"></div>
+        </div>
+
+        <h2 class="ph">Players <span id="pcount-label" class="pcount"></span></h2>
+        <div class="stepper">
+          <button id="pminus" class="step-btn" aria-label="fewer players">−</button>
+          <div id="pdots" class="pdots"></div>
+          <button id="pplus" class="step-btn" aria-label="more players">+</button>
+        </div>
+        <div id="player-names" class="player-names"></div>
+
+        <h2 class="ph">Rules</h2>
+        <div class="rules-row">
+          <label class="field">
+            <span>Play to (points)</span>
+            <input id="target-input" type="number" inputmode="numeric" placeholder="no limit">
+          </label>
+          <label class="toggle">
+            <input id="lowest-wins" type="checkbox">
+            <span class="knob"></span>
+            <span class="tlabel">Lowest score wins</span>
+          </label>
+        </div>
+
+        <button id="start-btn" class="btn btn-start">Deal me in ▸</button>
+      </div>
+
+      <div id="history-wrap" hidden>
+        <h2 class="ph ph-light">Finished games</h2>
+        <div id="history-list"></div>
+      </div>
+      <footer class="setup-foot">made for game night 🂡</footer>
+    </div>
+  </section>
+
+  <!-- ============ TABLE ============ -->
+  <section id="screen-table" class="screen" hidden>
+    <div id="table-area">
+      <div id="felt">
+        <div class="felt-sheen"></div>
+        <!-- center score pad, face down -->
+        <div id="pad" class="pad">
+          <div class="pad-clip"></div>
+          <div class="pad-paper">
+            <div class="pad-game" id="pad-game"></div>
+            <div class="pad-round">ROUND</div>
+            <div class="pad-round-num" id="pad-round-num">1</div>
+            <div class="pad-progress" id="pad-progress"></div>
+          </div>
+          <div class="pad-pencil" aria-hidden="true">✏️</div>
+        </div>
+        <button id="commit-round" class="btn btn-commit" hidden>Score round ✓</button>
+      </div>
+      <div id="seats"></div>
+    </div>
+    <div class="table-controls">
+      <button id="home-btn" class="tc-btn" title="back to setup">☰</button>
+      <button id="peek-btn" class="tc-btn" title="hold to peek totals">👁</button>
+      <button id="finish-btn" class="tc-btn tc-finish" title="finish game">🏁 Finish</button>
+    </div>
+    <div id="peek-sheet" class="peek-sheet" hidden></div>
+    <div id="round-stamp" class="round-stamp" hidden></div>
+  </section>
+
+  <!-- ============ CALCULATOR ============ -->
+  <div id="calc-overlay" hidden>
+    <div id="calc" class="calc">
+      <div class="calc-head">
+        <span id="calc-player" class="calc-player"></span>
+        <button id="calc-close" class="calc-close" aria-label="close">✕</button>
+      </div>
+      <div class="lcd">
+        <div id="lcd-tape" class="lcd-tape"></div>
+        <div id="lcd-total" class="lcd-total">0</div>
+      </div>
+      <div id="quick-row" class="quick-row"></div>
+      <div class="keypad">
+        <button class="key" data-d="7">7</button>
+        <button class="key" data-d="8">8</button>
+        <button class="key" data-d="9">9</button>
+        <button class="key key-fn" data-op="clear">C</button>
+        <button class="key" data-d="4">4</button>
+        <button class="key" data-d="5">5</button>
+        <button class="key" data-d="6">6</button>
+        <button class="key key-fn" data-op="back">⌫</button>
+        <button class="key" data-d="1">1</button>
+        <button class="key" data-d="2">2</button>
+        <button class="key" data-d="3">3</button>
+        <button class="key key-fn" data-op="plus">+</button>
+        <button class="key key-fn" data-op="neg">±</button>
+        <button class="key" data-d="0">0</button>
+        <button class="key key-ok" data-op="ok" id="calc-ok">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ REVEAL ============ -->
+  <section id="screen-reveal" class="screen" hidden>
+    <canvas id="confetti"></canvas>
+    <div class="reveal-scroll">
+      <div id="winner-banner" class="winner-banner">
+        <div class="wb-trophy">🏆</div>
+        <div class="wb-name" id="winner-name"></div>
+        <div class="wb-sub" id="winner-sub"></div>
+      </div>
+      <div id="reveal-paper" class="reveal-paper">
+        <div class="rp-title" id="rp-title"></div>
+        <div class="rp-table-wrap">
+          <table id="score-table"></table>
+        </div>
+      </div>
+      <div class="reveal-actions">
+        <button id="rematch-btn" class="btn btn-primary">Rematch 🔁</button>
+        <button id="new-game-btn" class="btn btn-ghost">New game</button>
+      </div>
+    </div>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>

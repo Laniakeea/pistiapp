@@ -1,0 +1,23 @@
+# /etc/systemd/system/pisti.service
+[Unit]
+Description=Pisti points keeper
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=deniz
+WorkingDirectory=/home/deniz/pistiapp
+Environment=NODE_ENV=production
+Environment=PORT=8789
+Environment=BASE_PATH=/pisti
+ExecStart=/usr/bin/node --experimental-sqlite server/server.js
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=false
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

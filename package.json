@@ -1,0 +1,15 @@
+{
+  "name": "pistiapp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pisti — a tabletop points keeper PWA for card & dice games, served under /pisti.",
+  "type": "commonjs",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node --experimental-sqlite server/server.js",
+    "gen-icons": "node scripts/gen-icons.js"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  }
+}
