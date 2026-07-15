@@ -382,6 +382,13 @@ button { cursor: pointer; border: 0; background: none; color: inherit; }
   margin-right: 7px; vertical-align: baseline;
 }
 .calc-close { color: #9aa0ab; font-size: 18px; padding: 4px 8px; }
+.calc-head-btns { display: flex; gap: 2px; }
+.rename-input {
+  background: #1f2226; border: 1.5px solid #55606e; border-radius: 7px;
+  color: #e8dcc0; font-weight: 700; font-size: 16px; padding: 4px 8px;
+  width: 160px; outline: none;
+}
+.rename-input:focus { border-color: #e8973c; }
 
 /* LCD */
 .lcd {

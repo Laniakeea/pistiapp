@@ -26,6 +26,17 @@
         <p class="tagline">points keeper for table games</p>
       </header>
 
+      <div id="install-banner" class="paper-note" hidden>
+        <div class="rn-text">
+          <strong>Play as an app</strong>
+          <span id="install-hint"></span>
+        </div>
+        <div class="rn-actions">
+          <button id="install-btn" class="btn btn-primary">Install</button>
+          <button id="install-dismiss" class="btn btn-ghost" aria-label="dismiss">✕</button>
+        </div>
+      </div>
+
       <div id="resume-banner" class="paper-note" hidden>
         <div class="rn-text">
           <strong>Game in progress</strong>
@@ -112,7 +123,10 @@
     <div id="calc" class="calc">
       <div class="calc-head">
         <span id="calc-player" class="calc-player"></span>
-        <button id="calc-close" class="calc-close" aria-label="close">✕</button>
+        <span class="calc-head-btns">
+          <button id="calc-rename" class="calc-close" aria-label="rename player" title="rename player">✏️</button>
+          <button id="calc-close" class="calc-close" aria-label="close">✕</button>
+        </span>
       </div>
       <div class="lcd">
         <div id="lcd-tape" class="lcd-tape"></div>

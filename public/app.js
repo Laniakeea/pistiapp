@@ -444,14 +444,18 @@ function foldTyped() {
   }
 }
 
+function renderCalcHead() {
+  const p = state.players[calc.player];
+  $('calc-player').innerHTML =
+    `<span class="cp-dot" style="background:${p.color}"></span>${esc(p.name)} — round ${state.rounds.length + 1}`;
+}
+
 function openCalc(playerIdx) {
   calc.player = playerIdx;
   calc.terms = [];
   calc.typed = '';
   calc.neg = false;
-  const p = state.players[playerIdx];
-  $('calc-player').innerHTML =
-    `<span class="cp-dot" style="background:${p.color}"></span>${esc(p.name)} — round ${state.rounds.length + 1}`;
+  renderCalcHead();
 
   const qr = $('quick-row');
   qr.innerHTML = '';
@@ -479,6 +483,34 @@ function renderCalc() {
   tape.textContent = parts.join(' + ');
   tape.scrollLeft = tape.scrollWidth; // keep the newest entry visible
 }
+
+// Rename the player right from the calculator header. The change applies to
+// the running game and is remembered for the next one.
+$('calc-rename').onclick = () => {
+  const p = state.players[calc.player];
+  const head = $('calc-player');
+  head.innerHTML = `<span class="cp-dot" style="background:${p.color}"></span>`;
+  const inp = document.createElement('input');
+  inp.className = 'rename-input';
+  inp.maxLength = 16;
+  inp.value = p.name;
+  head.appendChild(inp);
+  inp.focus();
+  inp.select();
+  const commit = () => {
+    const name = inp.value.trim();
+    if (name && name !== p.name) {
+      p.name = name;
+      setup.names[calc.player] = name;
+      saveSetup();
+      save();
+      renderSeats();
+    }
+    renderCalcHead();
+  };
+  inp.addEventListener('blur', commit);
+  inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') inp.blur(); });
+};
 
 function closeCalc() { $('calc-overlay').hidden = true; }
 $('calc-close').onclick = closeCalc;
@@ -661,6 +693,50 @@ function confettiBurst() {
   requestAnimationFrame(frame);
 }
 
+// ====================== INSTALL PROMPT =========================================
+// Offer "add to home screen" once: Chromium fires beforeinstallprompt and we
+// show a real Install button; iOS Safari never fires it, so show instructions.
+
+function isStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches ||
+    navigator.standalone === true;
+}
+
+function initInstall() {
+  const banner = $('install-banner');
+  if (isStandalone() || localStorage.getItem('pisti-install-dismissed')) return;
+
+  let deferred = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferred = e;
+    $('install-btn').hidden = false;
+    $('install-hint').textContent = 'Add Pisti to your home screen';
+    banner.hidden = false;
+  });
+
+  // iOS Safari: no install API — point at the Share sheet instead.
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  if (isIOS) {
+    $('install-btn').hidden = true;
+    $('install-hint').textContent = 'Tap Share ⬆︎ then “Add to Home Screen”';
+    banner.hidden = false;
+  }
+
+  $('install-btn').onclick = async () => {
+    if (!deferred) return;
+    deferred.prompt();
+    const { outcome } = await deferred.userChoice;
+    deferred = null;
+    if (outcome === 'accepted') banner.hidden = true;
+  };
+  $('install-dismiss').onclick = () => {
+    banner.hidden = true;
+    localStorage.setItem('pisti-install-dismissed', '1');
+  };
+  window.addEventListener('appinstalled', () => { banner.hidden = true; });
+}
+
 // ====================== APP UPDATES ============================================
 // Reliable updates: register the SW, check for a new version at launch, on
 // every re-focus, and periodically. When one is installed and waiting, show
@@ -738,6 +814,7 @@ function boot() {
     show('setup');
   }
 
+  initInstall();
   initUpdates();
 }
 
