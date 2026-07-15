@@ -64,13 +64,19 @@ button { cursor: pointer; border: 0; background: none; color: inherit; }
   max-width: 560px; margin: 0 auto;
 }
 
-.brand { text-align: center; color: #f3e7cf; padding: 8px 0 18px; }
+.brand { text-align: center; color: #f3e7cf; padding: 8px 0 18px; position: relative; }
+.lang-row { position: absolute; top: 0; right: 0; display: flex; gap: 4px; z-index: 2; }
+.lang-btn {
+  font-size: 12px; font-weight: 800; letter-spacing: 1px; color: rgba(243,231,207,.55);
+  padding: 6px 9px; border-radius: 8px; box-shadow: inset 0 0 0 1.5px rgba(243,231,207,.25);
+}
+.lang-btn.on { color: #2c2418; background: #f3e7cf; box-shadow: 0 2px 5px rgba(0,0,0,.35); }
 .brand h1 {
   font-size: 44px; letter-spacing: 4px; font-weight: 800;
   text-shadow: 0 2px 0 rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.45);
 }
 .tagline { font-size: 13px; opacity: .75; letter-spacing: 2px; text-transform: uppercase; }
-.brand-cards { position: relative; height: 54px; margin-bottom: 6px; }
+.brand-cards { position: relative; height: 54px; margin-bottom: 6px; pointer-events: none; }
 .bc {
   position: absolute; left: 50%; top: 4px; width: 34px; height: 46px;
   border-radius: 5px; box-shadow: 0 3px 8px rgba(0,0,0,.45);

@@ -4,7 +4,7 @@
 // Bump CACHE on every deploy so clients pick up the new version.
 
 const BASE = self.location.pathname.replace(/\/sw\.js$/, ''); // e.g. /pisti
-const CACHE = 'pisti-v2';
+const CACHE = 'pisti-v3';
 const SHELL = [
   `${BASE}/`,
   `${BASE}/index.html`,

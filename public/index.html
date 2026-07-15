@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="tr">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
@@ -13,51 +13,55 @@
 <body>
 
   <div id="update-bar" hidden>
-    <span>✨ A new version is ready</span>
-    <button id="update-btn">Update</button>
+    <span data-t="updateReady">✨ A new version is ready</span>
+    <button id="update-btn" data-t="updateBtn">Update</button>
   </div>
 
   <!-- ============ SETUP ============ -->
   <section id="screen-setup" class="screen">
     <div class="setup-scroll">
       <header class="brand">
+        <div class="lang-row">
+          <button id="lang-tr" class="lang-btn">TR</button>
+          <button id="lang-en" class="lang-btn">EN</button>
+        </div>
         <div class="brand-cards" aria-hidden="true"><span class="bc bc-back"></span><span class="bc bc-front">♥</span></div>
         <h1>Pisti</h1>
-        <p class="tagline">points keeper for table games</p>
+        <p class="tagline" data-t="tagline">points keeper for table games</p>
       </header>
 
       <div id="install-banner" class="paper-note" hidden>
         <div class="rn-text">
-          <strong>Play as an app</strong>
+          <strong data-t="installTitle">Play as an app</strong>
           <span id="install-hint"></span>
         </div>
         <div class="rn-actions">
-          <button id="install-btn" class="btn btn-primary">Install</button>
+          <button id="install-btn" class="btn btn-primary" data-t="installBtn">Install</button>
           <button id="install-dismiss" class="btn btn-ghost" aria-label="dismiss">✕</button>
         </div>
       </div>
 
       <div id="resume-banner" class="paper-note" hidden>
         <div class="rn-text">
-          <strong>Game in progress</strong>
+          <strong data-t="resumeTitle">Game in progress</strong>
           <span id="resume-desc"></span>
         </div>
         <div class="rn-actions">
-          <button id="resume-btn" class="btn btn-primary">Resume</button>
-          <button id="discard-btn" class="btn btn-ghost">Discard</button>
+          <button id="resume-btn" class="btn btn-primary" data-t="resumeBtn">Resume</button>
+          <button id="discard-btn" class="btn btn-ghost" data-t="discardBtn">Discard</button>
         </div>
       </div>
 
       <div class="paper-form">
-        <h2 class="ph">Pick a game</h2>
+        <h2 class="ph" data-t="pickGame">Pick a game</h2>
         <div id="preset-grid" class="preset-grid"></div>
 
         <div id="custom-editor" hidden>
-          <h2 class="ph">Custom bonus buttons</h2>
+          <h2 class="ph" data-t="customButtons">Custom bonus buttons</h2>
           <div id="custom-rows"></div>
         </div>
 
-        <h2 class="ph">Players <span id="pcount-label" class="pcount"></span></h2>
+        <h2 class="ph"><span data-t="players">Players</span> <span id="pcount-label" class="pcount"></span></h2>
         <div class="stepper">
           <button id="pminus" class="step-btn" aria-label="fewer players">−</button>
           <div id="pdots" class="pdots"></div>
@@ -65,27 +69,27 @@
         </div>
         <div id="player-names" class="player-names"></div>
 
-        <h2 class="ph">Rules</h2>
+        <h2 class="ph" data-t="rules">Rules</h2>
         <div class="rules-row">
           <label class="field">
-            <span>Play to (points)</span>
-            <input id="target-input" type="number" inputmode="numeric" placeholder="no limit">
+            <span data-t="playTo">Play to (points)</span>
+            <input id="target-input" type="number" inputmode="numeric" data-tp="noLimit" placeholder="no limit">
           </label>
           <label class="toggle">
             <input id="lowest-wins" type="checkbox">
             <span class="knob"></span>
-            <span class="tlabel">Lowest score wins</span>
+            <span class="tlabel" data-t="lowestWins">Lowest score wins</span>
           </label>
         </div>
 
-        <button id="start-btn" class="btn btn-start">Deal me in ▸</button>
+        <button id="start-btn" class="btn btn-start" data-t="startBtn">Deal me in ▸</button>
       </div>
 
       <div id="history-wrap" hidden>
-        <h2 class="ph ph-light">Finished games</h2>
+        <h2 class="ph ph-light" data-t="finishedGames">Finished games</h2>
         <div id="history-list"></div>
       </div>
-      <footer class="setup-foot">made for game night 🂡</footer>
+      <footer class="setup-foot" data-t="footer">made for game night 🂡</footer>
     </div>
   </section>
 
@@ -99,20 +103,20 @@
           <div class="pad-clip"></div>
           <div class="pad-paper">
             <div class="pad-game" id="pad-game"></div>
-            <div class="pad-round">ROUND</div>
+            <div class="pad-round" data-t="roundLabel">ROUND</div>
             <div class="pad-round-num" id="pad-round-num">1</div>
             <div class="pad-progress" id="pad-progress"></div>
           </div>
           <div class="pad-pencil" aria-hidden="true">✏️</div>
         </div>
-        <button id="commit-round" class="btn btn-commit" hidden>Score round ✓</button>
+        <button id="commit-round" class="btn btn-commit" hidden data-t="commitRound">Score round ✓</button>
       </div>
       <div id="seats"></div>
     </div>
     <div class="table-controls">
       <button id="home-btn" class="tc-btn" title="back to setup">☰</button>
       <button id="peek-btn" class="tc-btn" title="hold to peek totals">👁</button>
-      <button id="finish-btn" class="tc-btn tc-finish" title="finish game">🏁 Finish</button>
+      <button id="finish-btn" class="tc-btn tc-finish" data-t="finishBtn">🏁 Finish</button>
     </div>
     <div id="peek-sheet" class="peek-sheet" hidden></div>
     <div id="round-stamp" class="round-stamp" hidden></div>
@@ -169,8 +173,8 @@
         </div>
       </div>
       <div class="reveal-actions">
-        <button id="rematch-btn" class="btn btn-primary">Rematch 🔁</button>
-        <button id="new-game-btn" class="btn btn-ghost">New game</button>
+        <button id="rematch-btn" class="btn btn-primary" data-t="rematch">Rematch 🔁</button>
+        <button id="new-game-btn" class="btn btn-ghost" data-t="newGame">New game</button>
       </div>
     </div>
   </section>

@@ -9,6 +9,109 @@ const BASE = new URL('.', location.href).pathname.replace(/\/$/, '');
 const api = (p) => `${BASE}${p}`;
 const $ = (id) => document.getElementById(id);
 
+// ---- i18n ---------------------------------------------------------------
+// Turkish is the default; EN available via the toggle on the setup screen.
+
+const I18N = {
+  tr: {
+    tagline: 'masa oyunları için puan defteri',
+    updateReady: '✨ Yeni sürüm hazır',
+    updateBtn: 'Güncelle',
+    installTitle: 'Uygulama olarak oyna',
+    installBtn: 'Yükle',
+    installHintAndroid: 'Pisti’yi ana ekranına ekle',
+    installHintIos: 'Paylaş ⬆︎ sonra “Ana Ekrana Ekle”',
+    resumeTitle: 'Devam eden oyun var',
+    resumeBtn: 'Devam et',
+    discardBtn: 'Sil',
+    pickGame: 'Oyun seç',
+    customButtons: 'Özel bonus tuşları',
+    labelPh: 'Etiket',
+    ptsPh: '+puan',
+    players: 'Oyuncular',
+    playerN: (n) => `Oyuncu ${n}`,
+    rules: 'Kurallar',
+    playTo: 'Hedef puan',
+    noLimit: 'sınırsız',
+    lowestWins: 'En düşük puan kazanır',
+    startBtn: 'Oyunu başlat ▸',
+    finishedGames: 'Biten oyunlar',
+    footer: 'oyun geceleri için 🂡',
+    roundLabel: 'EL',
+    commitRound: 'Eli yaz ✓',
+    finishBtn: '🏁 Bitir',
+    finishSure: 'Emin misin? 🏁',
+    stamp: (n) => `${n}. el ✓`,
+    resumeDesc: (g, r, p) => `${g} · ${r}. el · ${p} oyuncu`,
+    calcRound: (r) => `${r}. el`,
+    winnerSub: (g, pts, n) => `${g} oyununu ${pts} puanla kazandı · ${n} el`,
+    scoreSheet: (g) => `${g} — puan kağıdı`,
+    histWon: (w, g) => `<span class="hw">${w}</span> kazandı · ${g}`,
+    histMeta: (n, d) => `${n} el · ${d}`,
+    rematch: 'Rövanş 🔁',
+    newGame: 'Yeni oyun',
+    locale: 'tr-TR',
+  },
+  en: {
+    tagline: 'points keeper for table games',
+    updateReady: '✨ A new version is ready',
+    updateBtn: 'Update',
+    installTitle: 'Play as an app',
+    installBtn: 'Install',
+    installHintAndroid: 'Add Pisti to your home screen',
+    installHintIos: 'Tap Share ⬆︎ then “Add to Home Screen”',
+    resumeTitle: 'Game in progress',
+    resumeBtn: 'Resume',
+    discardBtn: 'Discard',
+    pickGame: 'Pick a game',
+    customButtons: 'Custom bonus buttons',
+    labelPh: 'Label',
+    ptsPh: '+pts',
+    players: 'Players',
+    playerN: (n) => `Player ${n}`,
+    rules: 'Rules',
+    playTo: 'Play to (points)',
+    noLimit: 'no limit',
+    lowestWins: 'Lowest score wins',
+    startBtn: 'Deal me in ▸',
+    finishedGames: 'Finished games',
+    footer: 'made for game night 🂡',
+    roundLabel: 'ROUND',
+    commitRound: 'Score round ✓',
+    finishBtn: '🏁 Finish',
+    finishSure: 'Sure? 🏁',
+    stamp: (n) => `Round ${n} ✓`,
+    resumeDesc: (g, r, p) => `${g} · round ${r} · ${p} players`,
+    calcRound: (r) => `round ${r}`,
+    winnerSub: (g, pts, n) => `wins ${g} with ${pts} points · ${n} round${n === 1 ? '' : 's'}`,
+    scoreSheet: (g) => `${g} — score sheet`,
+    histWon: (w, g) => `<span class="hw">${w}</span> won ${g}`,
+    histMeta: (n, d) => `${n} rounds · ${d}`,
+    rematch: 'Rematch 🔁',
+    newGame: 'New game',
+    locale: 'en-US',
+  },
+};
+
+const LANG = localStorage.getItem('pisti-lang') || 'tr';
+const T = I18N[LANG] || I18N.tr;
+
+function applyI18n() {
+  document.documentElement.lang = LANG;
+  for (const el of document.querySelectorAll('[data-t]')) el.textContent = T[el.dataset.t];
+  for (const el of document.querySelectorAll('[data-tp]')) el.placeholder = T[el.dataset.tp];
+  $('lang-tr').classList.toggle('on', LANG === 'tr');
+  $('lang-en').classList.toggle('on', LANG === 'en');
+}
+
+function setLang(lang) {
+  if (lang === LANG) return;
+  localStorage.setItem('pisti-lang', lang);
+  location.reload();
+}
+$('lang-tr').onclick = () => setLang('tr');
+$('lang-en').onclick = () => setLang('en');
+
 // ---- game presets -----------------------------------------------------------
 // Each preset: default target score, win direction, and the calculator's
 // quick buttons (label + point value) for that game.
@@ -45,19 +148,19 @@ const PRESETS = [
     ],
   },
   {
-    id: 'dice', name: 'Dice', icon: '🎲', target: null, lowestWins: false,
+    id: 'dice', name: 'Dice', tn: 'Zar', icon: '🎲', target: null, lowestWins: false,
     quick: [
       { l: 'Bonus', v: 25 },
-      { l: 'Big win', v: 50 },
+      { l: 'Big win', tl: 'Büyük', v: 50 },
       { l: 'Jackpot', v: 100 },
     ],
   },
   {
-    id: 'free', name: 'Custom', icon: '✏️', target: null, lowestWins: false,
+    id: 'free', name: 'Custom', tn: 'Özel', icon: '✏️', target: null, lowestWins: false,
     quick: [
       { l: 'Bonus', v: 10 },
-      { l: 'Double', v: 20 },
-      { l: 'Penalty', v: -10 },
+      { l: 'Double', tl: 'Çift', v: 20 },
+      { l: 'Penalty', tl: 'Ceza', v: -10 },
     ],
   },
 ];
@@ -139,6 +242,8 @@ const setup = Object.assign(
 );
 
 function currentPreset() { return PRESETS.find((p) => p.id === setup.preset) || PRESETS[0]; }
+const presetName = (p) => (LANG === 'tr' && p.tn ? p.tn : p.name);
+const qLabel = (q) => (LANG === 'tr' && q.tl ? q.tl : q.l);
 
 function renderPresets() {
   const grid = $('preset-grid');
@@ -146,8 +251,8 @@ function renderPresets() {
   for (const p of PRESETS) {
     const b = document.createElement('button');
     b.className = 'preset' + (p.id === setup.preset ? ' on' : '');
-    b.innerHTML = `<span class="pi">${p.icon}</span><span class="pn">${p.name}</span>` +
-      `<span class="pq">${p.quick.map((q) => q.l).join(' · ')}</span>`;
+    b.innerHTML = `<span class="pi">${p.icon}</span><span class="pn">${presetName(p)}</span>` +
+      `<span class="pq">${p.quick.map(qLabel).join(' · ')}</span>`;
     b.onclick = () => {
       setup.preset = p.id;
       $('target-input').value = p.target ?? '';
@@ -163,19 +268,20 @@ function renderPresets() {
 
 function renderCustomEditor() {
   const rows = $('custom-rows');
-  const cur = setup.customQuick || PRESETS.find((p) => p.id === 'free').quick;
+  const cur = setup.customQuick ||
+    PRESETS.find((p) => p.id === 'free').quick.map((q) => ({ l: qLabel(q), v: q.v }));
   rows.innerHTML = '';
   cur.forEach((q, i) => {
     const row = document.createElement('div');
     row.className = 'crow';
     const lab = document.createElement('input');
-    lab.placeholder = 'Label';
+    lab.placeholder = T.labelPh;
     lab.maxLength = 14;
     lab.value = q.l;
     const val = document.createElement('input');
     val.type = 'number';
     val.inputMode = 'numeric';
-    val.placeholder = '+pts';
+    val.placeholder = T.ptsPh;
     val.value = q.v;
     const upd = () => {
       const list = (setup.customQuick ||= cur.map((c) => ({ ...c })));
@@ -208,7 +314,7 @@ function renderPlayers() {
     chip.style.background = COLORS[i];
     chip.textContent = (setup.names[i] || `P${i + 1}`).trim().charAt(0).toUpperCase() || (i + 1);
     const inp = document.createElement('input');
-    inp.placeholder = `Player ${i + 1}`;
+    inp.placeholder = T.playerN(i + 1);
     inp.maxLength = 16;
     inp.value = setup.names[i] || '';
     inp.oninput = () => {
@@ -228,19 +334,21 @@ $('pplus').onclick = () => { if (setup.nPlayers < MAX_P) { setup.nPlayers++; ren
 
 $('start-btn').onclick = () => {
   const p = currentPreset();
-  const quick = setup.preset === 'free' && setup.customQuick ? setup.customQuick.filter((q) => q.l) : p.quick;
+  const quick = setup.preset === 'free' && setup.customQuick
+    ? setup.customQuick.filter((q) => q.l)
+    : p.quick.map((q) => ({ l: qLabel(q), v: q.v }));
   const targetRaw = parseInt($('target-input').value, 10);
   state = {
     v: 1,
     sid: null,
     game: p.id,
-    gameName: p.name,
+    gameName: presetName(p),
     icon: p.icon,
     quick,
     lowestWins: $('lowest-wins').checked,
     target: Number.isFinite(targetRaw) && targetRaw > 0 ? targetRaw : null,
     players: Array.from({ length: setup.nPlayers }, (_, i) => ({
-      name: (setup.names[i] || '').trim() || `Player ${i + 1}`,
+      name: (setup.names[i] || '').trim() || T.playerN(i + 1),
       color: COLORS[i],
     })),
     rounds: [],
@@ -259,7 +367,7 @@ function renderResume() {
   if (state && state.status === 'playing') {
     banner.hidden = false;
     $('resume-desc').textContent =
-      `${state.gameName} · round ${state.rounds.length + 1} · ${state.players.length} players`;
+      T.resumeDesc(state.gameName, state.rounds.length + 1, state.players.length);
   } else {
     banner.hidden = true;
   }
@@ -280,9 +388,9 @@ function renderHistory() {
   for (const h of hist) {
     const item = document.createElement('button');
     item.className = 'history-item';
-    const when = new Date(h.finishedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-    item.innerHTML = `<span>${h.icon} <span class="hw">${esc(h.winner)}</span> won ${esc(h.gameName)}</span>` +
-      `<span class="hd">${h.rounds} rounds · ${when}</span>`;
+    const when = new Date(h.finishedAt).toLocaleDateString(T.locale, { month: 'short', day: 'numeric' });
+    item.innerHTML = `<span>${h.icon} ${T.histWon(esc(h.winner), esc(h.gameName))}</span>` +
+      `<span class="hd">${T.histMeta(h.rounds, when)}</span>`;
     item.onclick = () => { showReveal(h.state, { quiet: true }); };
     list.appendChild(item);
   }
@@ -367,7 +475,7 @@ $('commit-round').onclick = () => {
   state.rounds.push(state.entries);
   state.entries = Array(state.players.length).fill(null);
   save();
-  stamp(`Round ${n} ✓`);
+  stamp(T.stamp(n));
   renderTable();
 
   // target reached? game over (after the stamp has a beat to land)
@@ -415,12 +523,12 @@ $('home-btn').onclick = () => { renderResume(); renderHistory(); show('setup'); 
   let armed = 0;
   $('finish-btn').onclick = () => {
     if (Date.now() - armed < 2500) {
-      $('finish-btn').textContent = '🏁 Finish';
+      $('finish-btn').textContent = T.finishBtn;
       finishGame();
     } else {
       armed = Date.now();
-      $('finish-btn').textContent = 'Sure? 🏁';
-      setTimeout(() => { $('finish-btn').textContent = '🏁 Finish'; }, 2500);
+      $('finish-btn').textContent = T.finishSure;
+      setTimeout(() => { $('finish-btn').textContent = T.finishBtn; }, 2500);
     }
   };
 }
@@ -447,7 +555,7 @@ function foldTyped() {
 function renderCalcHead() {
   const p = state.players[calc.player];
   $('calc-player').innerHTML =
-    `<span class="cp-dot" style="background:${p.color}"></span>${esc(p.name)} — round ${state.rounds.length + 1}`;
+    `<span class="cp-dot" style="background:${p.color}"></span>${esc(p.name)} — ${T.calcRound(state.rounds.length + 1)}`;
 }
 
 function openCalc(playerIdx) {
@@ -597,9 +705,8 @@ function showReveal(st, { quiet }) {
   const w = winnerIndex(st, t);
 
   $('winner-name').textContent = st.players[w].name;
-  $('winner-sub').textContent =
-    `wins ${st.gameName} with ${t[w]} points · ${st.rounds.length} round${st.rounds.length === 1 ? '' : 's'}`;
-  $('rp-title').textContent = `${st.icon} ${st.gameName} — score sheet`;
+  $('winner-sub').textContent = T.winnerSub(st.gameName, t[w], st.rounds.length);
+  $('rp-title').textContent = `${st.icon} ${T.scoreSheet(st.gameName)}`;
 
   // ranking for medals
   const order = t.map((v, i) => i).sort((a, b) => (st.lowestWins ? t[a] - t[b] : t[b] - t[a]));
@@ -711,7 +818,7 @@ function initInstall() {
     e.preventDefault();
     deferred = e;
     $('install-btn').hidden = false;
-    $('install-hint').textContent = 'Add Pisti to your home screen';
+    $('install-hint').textContent = T.installHintAndroid;
     banner.hidden = false;
   });
 
@@ -719,7 +826,7 @@ function initInstall() {
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
   if (isIOS) {
     $('install-btn').hidden = true;
-    $('install-hint').textContent = 'Tap Share ⬆︎ then “Add to Home Screen”';
+    $('install-hint').textContent = T.installHintIos;
     banner.hidden = false;
   }
 
@@ -795,6 +902,7 @@ async function initUpdates() {
 // ====================== BOOT ===================================================
 
 function boot() {
+  applyI18n();
   state = loadJSON(LS_CURRENT, null);
 
   // restore setup UI
