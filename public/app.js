@@ -55,11 +55,14 @@ const I18N = {
     newGame: 'Yeni oyun',
     okBtn: 'Tamam',
     // multiplayer
-    mpHeading: 'Birlikte oyna',
-    mpToggle: 'Çok oyunculu (herkes kendi telefonundan)',
+    mpCreateBtn: '🌐 Lobi kur',
+    mpJoinBtn: '🔗 Çok oyunculu oyuna katıl',
+    modalCreate: 'Lobi kur',
+    modalJoin: 'Bir oyuna katıl',
+    cancel: 'Vazgeç',
+    theme: 'Tema',
     yourName: 'Adın',
     yourNamePh: 'adını yaz',
-    joinTitle: 'Bir oyuna katıl',
     joinCodePh: 'oda kodu',
     joinBtn: 'Katıl',
     joinErrNotFound: 'Oda bulunamadı',
@@ -105,6 +108,29 @@ const I18N = {
     monoSheet: 'Monopoly — hesap defteri',
     utilRent: 'zar × 4 / 10',
     logTurn: (n) => `Sıra: ${n}`,
+    // trades
+    tradeTile: 'Takas',
+    tradePartner: 'Kiminle takas?',
+    gives: (n) => `${n} veriyor`,
+    sendOffer: 'Teklifi gönder 🤝',
+    tradeIncoming: '🤝 Takas teklifi!',
+    tradeWaiting: '🤝 Cevap bekleniyor…',
+    accept: '✅ Kabul et',
+    counterBtn: '✏️ Karşı teklif',
+    reject: '❌ Reddet',
+    nothing: '—',
+    // bankruptcy & property management
+    bankruptTile: 'İflas',
+    bankruptTitle: 'İflas — geri dönüşü yok!',
+    toMarket: '🏪 Mülkler piyasaya dönsün',
+    toCreditor: '🤝 Her şeyi bir oyuncuya bırak',
+    chooseCreditor: 'Kime kalsın?',
+    eliminated: 'oyun dışı',
+    disownBtn: 'Bırak ₺0',
+    insufficient: 'Yetersiz bakiye!',
+    jailTileIn: 'Hapse gir',
+    jailTileOut: (n) => `Hapisten çık (${n} el)`,
+    priceLbl: 'fiyat',
     locale: 'tr-TR',
   },
   en: {
@@ -148,11 +174,14 @@ const I18N = {
     rematch: 'Rematch 🔁',
     newGame: 'New game',
     okBtn: 'OK',
-    mpHeading: 'Play together',
-    mpToggle: 'Multiplayer (everyone on their own phone)',
+    mpCreateBtn: '🌐 Create lobby',
+    mpJoinBtn: '🔗 Join a multiplayer game',
+    modalCreate: 'Create lobby',
+    modalJoin: 'Join a game',
+    cancel: 'Cancel',
+    theme: 'Theme',
     yourName: 'Your name',
     yourNamePh: 'your name',
-    joinTitle: 'Join a game',
     joinCodePh: 'room code',
     joinBtn: 'Join',
     joinErrNotFound: 'Room not found',
@@ -197,6 +226,27 @@ const I18N = {
     monoSheet: 'Monopoly — ledger',
     utilRent: 'dice × 4 / 10',
     logTurn: (n) => `Turn: ${n}`,
+    tradeTile: 'Trade',
+    tradePartner: 'Trade with whom?',
+    gives: (n) => `${n} gives`,
+    sendOffer: 'Send offer 🤝',
+    tradeIncoming: '🤝 Trade offer!',
+    tradeWaiting: '🤝 Waiting for reply…',
+    accept: '✅ Accept',
+    counterBtn: '✏️ Counter offer',
+    reject: '❌ Reject',
+    nothing: '—',
+    bankruptTile: 'Bankruptcy',
+    bankruptTitle: 'Bankruptcy — no way back!',
+    toMarket: '🏪 Properties return to market',
+    toCreditor: '🤝 Hand everything to a player',
+    chooseCreditor: 'Who gets it all?',
+    eliminated: 'eliminated',
+    disownBtn: 'Give up ₺0',
+    insufficient: 'Insufficient funds!',
+    jailTileIn: 'Go to jail',
+    jailTileOut: (n) => `Leave jail (${n} left)`,
+    priceLbl: 'price',
     locale: 'en-US',
   },
 };
@@ -219,6 +269,30 @@ function setLang(lang) {
 }
 $('lang-tr').onclick = () => setLang('tr');
 $('lang-en').onclick = () => setLang('en');
+
+// ---- themes -------------------------------------------------------------
+// Four table looks, applied via body[data-theme] + CSS custom properties.
+
+const THEMES = ['yesil', 'mavi', 'bordo', 'gece'];
+let THEME = localStorage.getItem('pisti-theme') || 'yesil';
+if (!THEMES.includes(THEME)) THEME = 'yesil';
+
+function renderThemeRow() {
+  const row = $('theme-row');
+  row.innerHTML = '';
+  for (const t of THEMES) {
+    const b = document.createElement('button');
+    b.className = 'theme-swatch t-' + t + (t === THEME ? ' on' : '');
+    b.setAttribute('aria-label', t);
+    b.onclick = () => {
+      THEME = t;
+      localStorage.setItem('pisti-theme', t);
+      document.body.dataset.theme = t;
+      renderThemeRow();
+    };
+    row.appendChild(b);
+  }
+}
 
 // ---- game presets -----------------------------------------------------------
 // items: the 1-tap entry buttons. {l, v} adds v per tap; an optional combo
@@ -258,6 +332,26 @@ const PRESETS = [
     items: [
       { l: 'Rummy', v: 50 },
       { l: 'Gin', v: 25 },
+    ],
+  },
+  {
+    // Card-count punishment game: rank buttons at face value except the
+    // honours; the 3s score off a per-count table (1→3, 2→6, 3→90, 4→270).
+    id: 'dost', name: 'Dost Kazığı', icon: '🗡️', target: null, lowestWins: true,
+    items: [
+      { l: 'A', v: 10 },
+      { l: '2', v: 2 },
+      { l: '3', v: 3, map: [3, 6, 90, 270] },
+      { l: '4', v: 4 },
+      { l: '5', v: 5 },
+      { l: '6', v: 6 },
+      { l: '7', v: 7 },
+      { l: '8', v: 8 },
+      { l: '9', v: 9 },
+      { l: '10', v: 10 },
+      { l: 'J', v: 25 },
+      { l: 'Q', v: 10 },
+      { l: 'K', v: 10 },
     ],
   },
   {
@@ -324,12 +418,12 @@ const MPROPS = [
   { id: 'izmir', n: 'İzmir', g: 'green', p: 320, r: [28, 150, 450, 1000, 1200, 1400] },
   { id: 'istanbul', n: 'İstanbul', g: 'dblue', p: 350, r: [35, 175, 500, 1100, 1300, 1500] },
   { id: 'giresun', n: 'Giresun', g: 'dblue', p: 400, r: [50, 200, 600, 1400, 1700, 2000] },
-  { id: 'haydarpasa', n: 'Haydarpaşa Garı', g: 'station', p: 200 },
-  { id: 'ankaragar', n: 'Ankara Garı', g: 'station', p: 200 },
-  { id: 'alsancak', n: 'Alsancak Garı', g: 'station', p: 200 },
-  { id: 'sirkeci', n: 'Sirkeci Garı', g: 'station', p: 200 },
-  { id: 'elektrik', n: 'Elektrik İdaresi', g: 'util', p: 150 },
-  { id: 'su', n: 'Su İdaresi', g: 'util', p: 150 },
+  { id: 'tramvay', n: 'Tramvay', g: 'station', p: 200 },
+  { id: 'havaalani', n: 'Havaalanı', g: 'station', p: 200 },
+  { id: 'liman', n: 'Deniz Limanı', g: 'station', p: 200 },
+  { id: 'metro', n: 'Metro', g: 'station', p: 200 },
+  { id: 'telekom', n: 'Telekom', g: 'util', p: 150 },
+  { id: 'dogalgaz', n: 'Doğalgaz', g: 'util', p: 150 },
 ];
 const MPROP = Object.fromEntries(MPROPS.map((p) => [p.id, p]));
 
@@ -560,7 +654,6 @@ function renderPresets() {
   $('score-rules').hidden = isMono;
   $('mono-rules').hidden = !isMono;
   if (setup.preset === 'free') renderCustomEditor();
-  renderStartBtn();
 }
 
 function customRows() {
@@ -645,26 +738,6 @@ function renderPlayers() {
   }
 }
 
-function renderMpToggle() {
-  $('join-name').value = setup.myName || '';
-  $('mp-toggle').checked = setup.mp;
-  $('solo-players').hidden = setup.mp;
-  $('mp-name-wrap').hidden = !setup.mp;
-  $('mp-name').value = setup.myName || '';
-  $('mp-name-chip').textContent = (setup.myName || '?').trim().charAt(0).toUpperCase() || '?';
-  renderStartBtn();
-}
-$('mp-toggle').onchange = () => { setup.mp = $('mp-toggle').checked; saveSetup(); renderMpToggle(); };
-$('mp-name').oninput = () => {
-  setup.myName = $('mp-name').value;
-  $('mp-name-chip').textContent = (setup.myName.trim() || '?').charAt(0).toUpperCase();
-  saveSetup();
-};
-
-function renderStartBtn() {
-  $('start-btn').textContent = setup.mp ? T.createLobby : T.startBtn;
-}
-
 function saveSetup() { storeJSON(LS_SETUP, setup); }
 
 $('pminus').onclick = () => { if (setup.nPlayers > MIN_P) { setup.nPlayers--; renderPlayers(); saveSetup(); } };
@@ -674,7 +747,7 @@ $('pplus').onclick = () => { if (setup.nPlayers < MAX_P) { setup.nPlayers++; ren
 function buildConfig() {
   const p = currentPreset();
   const isMono = p.mode === 'monopoly';
-  let items = p.items.map((q) => ({ l: iLabel(q), v: q.v, n: q.n || 1, cp: q.cp || 0 }));
+  let items = p.items.map((q) => ({ l: iLabel(q), v: q.v, n: q.n || 1, cp: q.cp || 0, map: q.map || null }));
   if (p.id === 'free') {
     items = customRows().filter((q) => q.l).map((q) => ({ l: q.l, v: q.v, n: q.n || 1, cp: q.cp || 0 }));
   }
@@ -694,26 +767,8 @@ function buildConfig() {
   };
 }
 
-$('start-btn').onclick = async () => {
+$('start-btn').onclick = () => {
   const c = buildConfig();
-  if (setup.mp) {
-    // multiplayer: create the lobby on the server
-    $('start-btn').disabled = true;
-    try {
-      const r = await fetch(api('/api/mp/create'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ config: c, hostName: (setup.myName || '').trim() || T.playerN(1) }),
-      });
-      if (!r.ok) throw new Error('create failed');
-      const j = await r.json();
-      mpEnter(j.code, j.playerId, j.token, j.state, j.version);
-    } catch {
-      showJoinError(T.joinErrNet);
-    }
-    $('start-btn').disabled = false;
-    return;
-  }
   // solo game on this phone
   state = {
     v: 2,
@@ -730,53 +785,93 @@ $('start-btn').onclick = async () => {
     startedAt: Date.now(),
     finishedAt: null,
   };
-  if (c.mode === 'monopoly') {
-    state.monopoly = {
-      money: state.players.map(() => c.startMoney),
-      jail: state.players.map(() => false),
-      props: {},
-      turn: 0,
-      log: [],
-    };
-  }
+  if (c.mode === 'monopoly') state.monopoly = freshMono(state.players.length, c.startMoney);
   save();
   renderTable();
   show('table');
 };
 
-// join by code
-function showJoinError(msg) {
-  const el = $('join-error');
+function freshMono(n, startMoney) {
+  return {
+    money: Array.from({ length: n }, () => startMoney),
+    jail: Array.from({ length: n }, () => 0),
+    bankrupt: Array.from({ length: n }, () => false),
+    props: {},
+    trade: null,
+    turn: 0,
+    log: [],
+  };
+}
+
+// ---- multiplayer entry: one modal for both "create lobby" and "join" ----
+
+let mpModalMode = 'join';
+
+function openMpModal(mode) {
+  mpModalMode = mode;
+  $('mp-modal-title').textContent = mode === 'create' ? T.modalCreate : T.modalJoin;
+  $('mp-modal-go').textContent = mode === 'create' ? T.createLobby : T.joinBtn;
+  $('mp-modal-code-wrap').hidden = mode === 'create';
+  $('mp-modal-name').value = setup.myName || '';
+  $('mp-modal-code').value = '';
+  $('mp-modal-error').hidden = true;
+  $('mp-modal').hidden = false;
+  $('mp-modal-name').focus();
+}
+function closeMpModal() { $('mp-modal').hidden = true; }
+function mpModalError(msg) {
+  const el = $('mp-modal-error');
   el.textContent = msg;
   el.hidden = false;
-  setTimeout(() => { el.hidden = true; }, 4000);
 }
-$('join-btn').onclick = async () => {
-  const code = $('join-code').value.trim();
-  if (!/^\d{6}$/.test(code)) { showJoinError(T.joinErrNotFound); return; }
-  const name = ($('join-name').value || setup.myName || '').trim();
-  if (name) { setup.myName = name; saveSetup(); }
-  $('join-btn').disabled = true;
+$('mp-create-btn').onclick = () => openMpModal('create');
+$('mp-join-btn').onclick = () => openMpModal('join');
+$('mp-modal-cancel').onclick = closeMpModal;
+$('mp-modal').addEventListener('click', (e) => { if (e.target === $('mp-modal')) closeMpModal(); });
+
+$('mp-modal-go').onclick = async () => {
+  const name = $('mp-modal-name').value.trim();
+  if (!name) { mpModalError(T.yourNamePh); return; }
+  setup.myName = name;
+  saveSetup();
+  $('mp-modal-go').disabled = true;
   try {
-    const r = await fetch(api('/api/mp/join'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, name }),
-    });
-    if (r.status === 404) showJoinError(T.joinErrNotFound);
-    else if (r.status === 409) {
-      const j = await r.json().catch(() => ({}));
-      showJoinError(j.error === 'full' ? T.joinErrFull : T.joinErrStarted);
-    } else if (!r.ok) showJoinError(T.joinErrNet);
-    else {
+    if (mpModalMode === 'create') {
+      const r = await fetch(api('/api/mp/create'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config: buildConfig(), hostName: name }),
+      });
+      if (!r.ok) throw new Error('create failed');
       const j = await r.json();
-      $('join-code').value = '';
+      closeMpModal();
       mpEnter(j.code, j.playerId, j.token, j.state, j.version);
+    } else {
+      const code = $('mp-modal-code').value.trim();
+      if (!/^\d{6}$/.test(code)) {
+        mpModalError(T.joinErrNotFound);
+      } else {
+        const r = await fetch(api('/api/mp/join'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, name }),
+        });
+        if (r.status === 404) mpModalError(T.joinErrNotFound);
+        else if (r.status === 409) {
+          const j = await r.json().catch(() => ({}));
+          mpModalError(j.error === 'full' ? T.joinErrFull : T.joinErrStarted);
+        } else if (!r.ok) mpModalError(T.joinErrNet);
+        else {
+          const j = await r.json();
+          closeMpModal();
+          mpEnter(j.code, j.playerId, j.token, j.state, j.version);
+        }
+      }
     }
   } catch {
-    showJoinError(T.joinErrNet);
+    mpModalError(T.joinErrNet);
   }
-  $('join-btn').disabled = false;
+  $('mp-modal-go').disabled = false;
 };
 
 function renderResume() {
@@ -933,13 +1028,30 @@ function renderTable() {
 }
 
 function renderMpad() {
+  ensureMonoLocal();
   const m = state.monopoly;
   if (!m) return;
   const turnP = state.players[m.turn];
   $('mpad-turn').textContent = turnP ? turnP.name : '';
   $('mpad-turn').style.color = turnP ? turnP.color : '';
-  const canTurn = !isMp() || m.turn === myIdx() || amHost();
-  $('mpad-endturn').hidden = !canTurn;
+  // everyone passes only their own turn in MP; solo (one phone) passes all
+  $('mpad-endturn').hidden = isMp() && m.turn !== myIdx();
+
+  // pending trade indicator
+  const tbtn = $('mpad-trade');
+  if (m.trade) {
+    const iDecide = !isMp() || m.trade.decider === myIdx();
+    const involved = !isMp() || m.trade.from === myIdx() || m.trade.to === myIdx();
+    tbtn.hidden = false;
+    tbtn.textContent = iDecide ? T.tradeIncoming : T.tradeWaiting;
+    tbtn.classList.toggle('urgent', iDecide);
+    tbtn.onclick = () => {
+      if (!involved && isMp()) return;
+      openMono('trade-review', { actor: isMp() ? myIdx() : m.trade.decider });
+    };
+  } else {
+    tbtn.hidden = true;
+  }
   $('mpad-log').innerHTML = m.log.slice(0, 3).map((l) => `<div>${esc(logLine(l))}</div>`).join('');
 }
 
@@ -954,8 +1066,25 @@ function logLine(l) {
     case 'mortgage': return `${pn(l.propId)}: ${l.on ? '🔒' : '🔓'} ${fmtM(l.amount)}`;
     case 'jail': return `${nm(l.player)} ${l.on ? '🚔' : '🕊'}`;
     case 'turn': return T.logTurn(nm(l.player));
+    case 'disown': return `${nm(l.player)} 🗑 ${pn(l.propId)}`;
+    case 'bankrupt': return `${nm(l.player)} 💀${l.creditor != null ? ' → ' + nm(l.creditor) : ''}`;
+    case 'trade': return `🤝 ${nm(l.player)} → ${nm(l.to)}`;
+    case 'tradeDone': return `🤝✅ ${nm(l.player)} ⇄ ${nm(l.to)}`;
+    case 'tradeOff': return `🤝❌`;
     default: return '';
   }
+}
+
+const jailNum = (v) => (typeof v === 'number' ? Math.max(0, v) : (v ? 3 : 0));
+const isDead = (m, i) => !!(m && m.bankrupt && m.bankrupt[i]);
+
+// Older saved games predate numeric jail / bankrupt / trade — coerce in place.
+function ensureMonoLocal() {
+  const m = state && state.monopoly;
+  if (!m) return;
+  if (!Array.isArray(m.bankrupt)) m.bankrupt = state.players.map(() => false);
+  m.jail = m.jail.map(jailNum);
+  if (m.trade === undefined) m.trade = null;
 }
 
 function renderSeats() {
@@ -968,16 +1097,25 @@ function renderSeats() {
     const seat = document.createElement('button');
     let cls = 'seat';
     if (!mono) cls += state.entries[i] !== null ? ' entered' : ' pending';
-    if (mono && m && m.turn === i) cls += ' turn';
+    if (mono && m && m.turn === i && !isDead(m, i)) cls += ' turn';
+    if (mono && isDead(m, i)) cls += ' dead';
     if (isMp() && i === me) cls += ' me';
     seat.className = cls;
     seat.style.setProperty('--pc', p.color);
-    const badge = mono
-      ? (m && m.jail[i] ? '<span class="seat-jail">🚔</span>' : '')
-      : `<span class="seat-card">${state.entries[i] !== null ? '✓' : ''}</span>`;
-    const sub = mono && m ? `<span class="seat-money">${fmtM(m.money[i])}</span>` : '';
+    let badge = '';
+    if (mono && m) {
+      if (isDead(m, i)) badge = '<span class="seat-jail">💀</span>';
+      else if (jailNum(m.jail[i]) > 0) badge = `<span class="seat-jail">🚔<b>${jailNum(m.jail[i])}</b></span>`;
+    } else if (!mono) {
+      badge = `<span class="seat-card">${state.entries[i] !== null ? '✓' : ''}</span>`;
+    }
+    const sub = mono && m
+      ? `<span class="seat-money">${isDead(m, i) ? T.eliminated : fmtM(m.money[i])}</span>`
+      : '';
+    // simple geometric figure: circle head over a stadium body
     seat.innerHTML =
-      `<span class="seat-avatar">${esc(p.name.charAt(0).toUpperCase())}${badge}</span>` +
+      `<span class="seat-fig"><span class="fig-head"></span>` +
+      `<span class="fig-body">${esc(p.name.charAt(0).toUpperCase())}</span>${badge}</span>` +
       `<span class="seat-name">${esc(p.name)}</span>` + sub;
     seat.onclick = () => onSeatTap(i);
     wrap.appendChild(seat);
@@ -988,6 +1126,9 @@ function renderSeats() {
 function onSeatTap(i) {
   if (state.status !== 'playing') return;
   if (state.mode === 'monopoly') {
+    ensureMonoLocal();
+    if (isDead(state.monopoly, i)) return;
+    if (isMp() && myIdx() >= 0 && isDead(state.monopoly, myIdx())) return; // spectating
     if (isMp() && i !== myIdx()) {
       openMono('transfer', { actor: myIdx(), to: i });
     } else {
@@ -1015,8 +1156,11 @@ function layoutSeats() {
   const shift = isMp() ? Math.max(0, myIdx()) : 0; // my seat at the bottom
   for (let i = 0; i < n; i++) {
     const a = Math.PI / 2 + (2 * Math.PI * ((i - shift + n) % n)) / n;
-    const x = cx + rx * Math.cos(a);
-    const y = cy + ry * Math.sin(a);
+    // superellipse (squircle) so seats hug the rounded-rectangle felt
+    const cosA = Math.cos(a);
+    const sinA = Math.sin(a);
+    const x = cx + rx * Math.sign(cosA) * Math.pow(Math.abs(cosA), 0.5);
+    const y = cy + ry * Math.sign(sinA) * Math.pow(Math.abs(sinA), 0.5);
     seats[i].style.left = `${x}px`;
     seats[i].style.top = `${y}px`;
   }
@@ -1106,8 +1250,16 @@ function entryTotal() {
   for (const [idx, c] of Object.entries(counts)) {
     const it = entryItems()[idx];
     if (!it) continue;
-    if (it.n > 1 && it.cp) sum += Math.floor(c / it.n) * it.cp + (c % it.n) * it.v;
-    else sum += c * it.v;
+    if (Array.isArray(it.map) && it.map.length) {
+      // exact score per tap count; beyond the table, extend linearly with v
+      sum += c <= it.map.length
+        ? it.map[c - 1]
+        : it.map[it.map.length - 1] + (c - it.map.length) * it.v;
+    } else if (it.n > 1 && it.cp) {
+      sum += Math.floor(c / it.n) * it.cp + (c % it.n) * it.v;
+    } else {
+      sum += c * it.v;
+    }
   }
   return sum;
 }
@@ -1121,7 +1273,9 @@ function openEntry(playerIdx) {
   entryItems().forEach((it, idx) => {
     const b = document.createElement('button');
     b.className = 'ecard';
-    const comboHint = it.n > 1 && it.cp ? `<small class="ec-combo">${it.n}× = ${it.cp}</small>` : '';
+    let comboHint = '';
+    if (Array.isArray(it.map) && it.map.length) comboHint = `<small class="ec-combo">${it.map.join('/')}</small>`;
+    else if (it.n > 1 && it.cp) comboHint = `<small class="ec-combo">${it.n}× = ${it.cp}</small>`;
     b.innerHTML = `<span class="ec-count" hidden>0</span><span class="ec-label">${esc(it.l)}</span>` +
       `<small class="ec-v">${it.v >= 0 ? '+' : ''}${it.v}</small>${comboHint}`;
     b.onclick = () => {
@@ -1318,96 +1472,218 @@ document.querySelector('.keypad').addEventListener('click', (e) => {
 
 // ====================== MONOPOLY ================================================
 
-// Apply a ledger op locally (solo). MP sends the same op to the server, which
-// runs the identical logic in server/mp.js — keep the two in sync.
+// Apply a ledger op locally. Mirrors server/mp.js applyMono minus permission
+// checks (the UI only offers legal actions; the server re-checks in MP).
+// Keep the two in sync. Returns an error string to show, or null.
 function applyMonoLocal(a) {
+  ensureMonoLocal();
   const m = state.monopoly;
+  const n = state.players.length;
   const amt = Math.floor(Math.abs(a.amount || 0));
   const mlog = (entry) => {
     m.log.unshift({ ...entry, at: Date.now() });
     if (m.log.length > 10) m.log.length = 10;
   };
+  const nextTurn = () => {
+    for (let k = 1; k <= n; k++) {
+      const t = (m.turn + k) % n;
+      if (!m.bankrupt[t]) return t;
+    }
+    return m.turn;
+  };
   switch (a.op) {
-    case 'transfer':
+    case 'transfer': {
+      if (!amt) return T.insufficient;
+      if (a.from !== 'bank' && m.money[a.from] < amt) return T.insufficient;
       if (a.from !== 'bank') m.money[a.from] -= amt;
       if (a.to !== 'bank') m.money[a.to] += amt;
       mlog({ op: 'transfer', from: a.from, to: a.to, amount: amt });
-      break;
-    case 'buy':
+      return null;
+    }
+    case 'buy': {
+      if (m.props[a.propId]) return null;
+      const price = Math.floor(a.price || 0);
+      if (m.money[a.player] < price) return T.insufficient;
       m.props[a.propId] = { owner: a.player, houses: 0, mortgaged: false };
-      m.money[a.player] -= Math.floor(a.price || 0);
-      mlog({ op: 'buy', player: a.player, propId: a.propId, amount: Math.floor(a.price || 0) });
-      break;
+      m.money[a.player] -= price;
+      mlog({ op: 'buy', player: a.player, propId: a.propId, amount: price });
+      return null;
+    }
     case 'sell': {
       const p = m.props[a.propId];
-      if (!p) break;
+      if (!p || p.houses > 0) return null;
       delete m.props[a.propId];
       m.money[p.owner] += Math.floor(a.refund || 0);
       mlog({ op: 'sell', player: p.owner, propId: a.propId, amount: Math.floor(a.refund || 0) });
-      break;
+      return null;
+    }
+    case 'disown': {
+      // back to the market, no cashback
+      const p = m.props[a.propId];
+      if (!p || p.houses > 0) return null;
+      delete m.props[a.propId];
+      mlog({ op: 'disown', player: p.owner, propId: a.propId });
+      return null;
     }
     case 'house': {
       const p = m.props[a.propId];
-      if (!p) break;
-      const next = p.houses + (a.delta > 0 ? 1 : -1);
-      if (next < 0 || next > 5) break;
+      if (!p) return null;
+      const delta = a.delta > 0 ? 1 : -1;
+      const next = p.houses + delta;
+      if (next < 0 || next > 5) return null;
+      const cost = Math.floor(a.cost || 0);
+      if (delta > 0) {
+        if (m.money[p.owner] < cost) return T.insufficient;
+        m.money[p.owner] -= cost;
+      } else {
+        m.money[p.owner] += Math.floor(cost / 2); // demolition refunds 50%
+      }
       p.houses = next;
-      m.money[p.owner] -= (a.delta > 0 ? 1 : -1) * Math.floor(a.cost || 0);
       mlog({ op: 'house', player: p.owner, propId: a.propId, houses: next });
-      break;
+      return null;
     }
     case 'mortgage': {
       const p = m.props[a.propId];
-      if (!p || !!p.mortgaged === !!a.on) break;
+      if (!p || !!p.mortgaged === !!a.on) return null;
+      const value = Math.floor(a.value || 0);
+      if (!a.on && m.money[p.owner] < value) return T.insufficient;
       p.mortgaged = !!a.on;
-      m.money[p.owner] += a.on ? Math.floor(a.value || 0) : -Math.floor(a.value || 0);
-      mlog({ op: 'mortgage', player: p.owner, propId: a.propId, on: !!a.on, amount: Math.floor(a.value || 0) });
-      break;
+      m.money[p.owner] += a.on ? value : -value;
+      mlog({ op: 'mortgage', player: p.owner, propId: a.propId, on: !!a.on, amount: value });
+      return null;
     }
-    case 'jail':
-      m.jail[a.player] = !!a.on;
+    case 'jail': {
+      m.jail[a.player] = a.on ? 3 : 0;
       mlog({ op: 'jail', player: a.player, on: !!a.on });
-      break;
-    case 'turn':
-      m.turn = (m.turn + 1) % state.players.length;
+      return null;
+    }
+    case 'turn': {
+      if (m.jail[m.turn] > 0) m.jail[m.turn]--; // a pass counts a jail round
+      m.turn = nextTurn();
       mlog({ op: 'turn', player: m.turn });
-      break;
+      return null;
+    }
+    case 'bankrupt': {
+      const who = a.player;
+      const creditor = Number.isInteger(a.creditor) ? a.creditor : null;
+      for (const [id, p] of Object.entries(m.props)) {
+        if (p.owner !== who) continue;
+        if (creditor !== null) { p.owner = creditor; p.houses = 0; }
+        else delete m.props[id];
+      }
+      if (creditor !== null) m.money[creditor] += m.money[who];
+      m.money[who] = 0;
+      m.jail[who] = 0;
+      m.bankrupt[who] = true;
+      if (m.trade && (m.trade.from === who || m.trade.to === who)) m.trade = null;
+      if (m.turn === who) m.turn = nextTurn();
+      mlog({ op: 'bankrupt', player: who, creditor });
+      return null;
+    }
+    case 'tradeOffer': {
+      if (m.trade) return null;
+      if (a.give.money > m.money[a.from]) return T.insufficient;
+      m.trade = { from: a.from, to: a.to, give: a.give, want: a.want, decider: a.to };
+      mlog({ op: 'trade', player: a.from, to: a.to });
+      return null;
+    }
+    case 'tradeCounter': {
+      const t = m.trade;
+      if (!t) return null;
+      t.give = a.give;
+      t.want = a.want;
+      t.decider = t.decider === t.from ? t.to : t.from;
+      mlog({ op: 'trade', player: t.decider === t.from ? t.to : t.from, to: t.decider });
+      return null;
+    }
+    case 'tradeAccept': {
+      const t = m.trade;
+      if (!t) return null;
+      const fromNet = t.want.money - t.give.money;
+      const toNet = t.give.money - t.want.money;
+      if (m.money[t.from] + fromNet < 0 || m.money[t.to] + toNet < 0) return T.insufficient;
+      for (const id of t.give.props) if (m.props[id]) m.props[id].owner = t.to;
+      for (const id of t.want.props) if (m.props[id]) m.props[id].owner = t.from;
+      m.money[t.from] += fromNet;
+      m.money[t.to] += toNet;
+      m.trade = null;
+      mlog({ op: 'tradeDone', player: t.from, to: t.to });
+      return null;
+    }
+    case 'tradeReject': {
+      m.trade = null;
+      mlog({ op: 'tradeOff', player: a.player ?? 0 });
+      return null;
+    }
   }
+  return null;
 }
 
-// Run a monopoly op: locally for solo, via the server for MP (with an
-// optimistic local apply so the UI feels instant).
+function solventLocal() {
+  const m = state.monopoly;
+  return state.players.filter((_, i) => !m.bankrupt[i]).length;
+}
+
+// Run a monopoly op: apply locally (optimistic in MP), sync to the server in
+// MP, and end the game when a bankruptcy leaves one player standing.
 function monoDo(a) {
-  if (state.status !== 'playing' || !state.monopoly) return;
-  applyMonoLocal(a);
+  if (!state || state.status !== 'playing' || !state.monopoly) return 'not playing';
+  const err = applyMonoLocal(a);
+  if (err) { monoToast(err); return err; }
   save();
   renderTable();
   if (mono.open) renderMono();
   if (isMp()) mpAction({ type: 'mono', ...a });
+  else if (solventLocal() <= 1 && state.players.length > 1) setTimeout(finishGame, 700);
+  return null;
+}
+
+function monoToast(msg) {
+  const sheet = document.querySelector('.mono-sheet');
+  if (!sheet) return;
+  let t = sheet.querySelector('.mono-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.className = 'mono-toast';
+    sheet.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.remove('go');
+  void t.offsetWidth;
+  t.classList.add('go');
 }
 
 // ---- monopoly action sheet ----
 
-const mono = { open: false, view: 'menu', actor: 0, to: null, back: null };
+const mono = { open: false, view: 'menu', actor: 0, to: null, back: null, sel: null, draft: null };
 
 function openMono(view, opts = {}) {
   mono.open = true;
   mono.view = view;
-  mono.actor = opts.actor ?? 0;
+  if (opts.actor !== undefined) mono.actor = opts.actor;
   mono.to = opts.to ?? null;
   mono.back = opts.back ?? null;
+  mono.sel = null;
+  if (opts.draft !== undefined) mono.draft = opts.draft;
   renderMono();
   $('mono-overlay').hidden = false;
 }
-function closeMono() { mono.open = false; $('mono-overlay').hidden = true; }
+function closeMono() {
+  mono.open = false;
+  $('mono-overlay').hidden = true;
+  const t = document.querySelector('.mono-toast'); // don't let it linger on reopen
+  if (t) t.remove();
+}
 $('mono-close').onclick = closeMono;
 $('mono-overlay').addEventListener('click', (e) => { if (e.target === $('mono-overlay')) closeMono(); });
 $('mono-back').onclick = () => { if (mono.back) openMono(mono.back, { actor: mono.actor }); };
 
 function renderMono() {
+  ensureMonoLocal();
   const m = state.monopoly;
   const a = mono.actor;
   const p = state.players[a];
+  if (!p) { closeMono(); return; }
   $('mono-title').innerHTML =
     `<span class="cp-dot" style="background:${p.color}"></span>${esc(p.name)} · <b>${fmtM(m.money[a])}</b>`;
   $('mono-back').hidden = !mono.back;
@@ -1418,29 +1694,80 @@ function renderMono() {
   else if (mono.view === 'transfer') renderMonoTransfer(body, a);
   else if (mono.view === 'buy') renderMonoBuy(body, a);
   else if (mono.view === 'props') renderMonoProps(body, a);
+  else if (mono.view === 'trade-partner') renderMonoTradePartner(body, a);
+  else if (mono.view === 'trade-build') renderMonoTradeBuild(body, a);
+  else if (mono.view === 'trade-review') renderMonoTradeReview(body, a);
+  else if (mono.view === 'bankrupt') renderMonoBankrupt(body, a);
 }
 
-function monoBtn(label, cb) {
+// leading emoji lives on the tile itself; strip it off the i18n string
+const noEmo = (s) => s.replace(/^[^\p{L}]+/u, '');
+
+function tile(emoji, label, cb, cls = '') {
   const b = document.createElement('button');
-  b.className = 'mono-btn';
-  b.textContent = label;
+  b.className = 'mono-tile' + (cls ? ' ' + cls : '');
+  b.innerHTML = `<span class="mt-emoji">${emoji}</span><span class="mt-label">${esc(label)}</span>`;
   b.onclick = cb;
   return b;
 }
 
+function alivePlayers() {
+  const m = state.monopoly;
+  return state.players.map((p, i) => ({ p, i })).filter(({ i }) => !isDead(m, i));
+}
+
 function renderMonoMenu(body, a) {
   const m = state.monopoly;
-  body.append(
-    monoBtn(T.sendMoney, () => openMono('transfer', { actor: a, back: 'menu' })),
-    monoBtn(T.salary, () => { monoDo({ op: 'transfer', from: 'bank', to: a, amount: 200 }); closeMono(); }),
-    monoBtn(T.fromBank, () => openMono('transfer', { actor: a, to: a, back: 'menu' })),
-    monoBtn(T.buyProp, () => openMono('buy', { actor: a, back: 'menu' })),
-    monoBtn(T.propsAll, () => openMono('props', { actor: a, back: 'menu' })),
-    monoBtn(m.jail[a] ? T.jailOut : T.jailIn, () => {
-      monoDo({ op: 'jail', player: a, on: !m.jail[a] });
+  const jailed = jailNum(m.jail[a]) > 0;
+  const grid = document.createElement('div');
+  grid.className = 'mono-grid';
+  grid.append(
+    tile('💸', noEmo(T.sendMoney), () => openMono('transfer', { actor: a, back: 'menu' })),
+    tile('🏦', noEmo(T.fromBank), () => openMono('transfer', { actor: a, to: a, back: 'menu' })),
+    tile('💵', noEmo(T.salary), () => { monoDo({ op: 'transfer', from: 'bank', to: a, amount: 200 }); closeMono(); }),
+    tile('🏠', noEmo(T.buyProp), () => openMono('buy', { actor: a, back: 'menu' })),
+    tile('📜', noEmo(T.propsAll), () => openMono('props', { actor: a, back: 'menu' })),
+    tile('🤝', T.tradeTile, () => {
+      if (m.trade) openMono('trade-review', { actor: a, back: 'menu' });
+      else openMono('trade-partner', { actor: a, back: 'menu' });
+    }),
+    tile(jailed ? '🕊' : '🚔', jailed ? T.jailTileOut(jailNum(m.jail[a])) : T.jailTileIn, () => {
+      monoDo({ op: 'jail', player: a, on: !jailed });
       closeMono();
-    })
+    }),
+    tile('💀', T.bankruptTile, () => openMono('bankrupt', { actor: a, back: 'menu' }), 'danger')
   );
+  body.appendChild(grid);
+}
+
+// ---- deed cards ----
+
+function deedEl(def, ps, opts = {}) {
+  const b = document.createElement('button');
+  b.className = 'deed' + (ps && ps.mortgaged ? ' mort' : '') + (opts.sel ? ' sel' : '');
+  const g = MGROUPS[def.g];
+  const houses = ps ? (ps.houses >= 5 ? '🏨' : '🏠'.repeat(ps.houses)) : '';
+  let info = '';
+  if (opts.price) {
+    info = fmtM(def.p);
+  } else if (ps) {
+    if (ps.mortgaged) info = '🔒';
+    else if (def.g === 'util') info = T.utilRent;
+    else info = `${T.rentNow} ${fmtM(rentOf(def.id, state.monopoly.props))}`;
+  }
+  b.innerHTML =
+    `<span class="deed-band" style="background:${g.c}"></span>` +
+    `<span class="deed-name">${esc(def.n)}</span>` +
+    `<span class="deed-info">${info}</span>` +
+    `<span class="deed-houses">${houses}</span>`;
+  if (opts.onTap) b.onclick = opts.onTap;
+  return b;
+}
+
+function deedGrid(cls = '') {
+  const g = document.createElement('div');
+  g.className = 'deed-grid' + (cls ? ' ' + cls : '');
+  return g;
 }
 
 // Transfer view. mono.to === actor means "take from bank"; otherwise pick a
@@ -1458,7 +1785,7 @@ function renderMonoTransfer(body, a) {
   const options = taking
     ? [['bank', T.bank, '#8a7452']]
     : [['bank', T.bank, '#8a7452'],
-       ...state.players.map((p, i) => [i, p.name, p.color]).filter(([i]) => i !== a)];
+       ...alivePlayers().map(({ p, i }) => [i, p.name, p.color]).filter(([i]) => i !== a)];
   const chipEls = new Map();
   for (const [val, name, color] of options) {
     const c = document.createElement('button');
@@ -1503,47 +1830,47 @@ function renderMonoTransfer(body, a) {
   go.onclick = () => {
     const amount = parseInt(inp.value, 10) || 0;
     if (!amount || selected === null) return;
-    if (taking) monoDo({ op: 'transfer', from: 'bank', to: a, amount });
-    else monoDo({ op: 'transfer', from: a, to: selected, amount });
-    closeMono();
+    // never let a balance go negative — shake instead
+    if (!taking && state.monopoly.money[a] < amount) {
+      inp.classList.remove('shake');
+      void inp.offsetWidth;
+      inp.classList.add('shake');
+      monoToast(T.insufficient);
+      return;
+    }
+    const err = taking
+      ? monoDo({ op: 'transfer', from: 'bank', to: a, amount })
+      : monoDo({ op: 'transfer', from: a, to: selected, amount });
+    if (!err) closeMono();
   };
   body.appendChild(go);
 }
 
 function renderMonoBuy(body, a) {
   const m = state.monopoly;
-  const free = MPROPS.filter((p) => !m.props[p.id]);
   const label = document.createElement('div');
   label.className = 'mono-label';
-  label.textContent = T.freeProps;
+  label.textContent = `${T.freeProps} · ${T.priceLbl}`;
   body.appendChild(label);
-  const list = document.createElement('div');
-  list.className = 'mono-list';
-  for (const p of free) {
-    const row = document.createElement('div');
-    row.className = 'mono-prop';
-    row.innerHTML =
-      `<span class="mp-color" style="background:${MGROUPS[p.g].c}"></span>` +
-      `<span class="mp-name">${esc(p.n)}</span>`;
-    const buy = document.createElement('button');
-    buy.className = 'mono-chip mp-buy';
-    buy.textContent = fmtM(p.p);
-    buy.onclick = () => {
-      monoDo({ op: 'buy', player: a, propId: p.id, price: p.p });
-      renderMono();
-    };
-    row.appendChild(buy);
-    list.appendChild(row);
+  const grid = deedGrid();
+  for (const def of MPROPS.filter((p) => !m.props[p.id])) {
+    grid.appendChild(deedEl(def, null, {
+      price: true,
+      onTap: () => {
+        if (m.money[a] < def.p) { monoToast(T.insufficient); return; }
+        monoDo({ op: 'buy', player: a, propId: def.id, price: def.p });
+      },
+    }));
   }
-  body.appendChild(list);
+  body.appendChild(grid);
 }
 
 function renderMonoProps(body, a) {
   const m = state.monopoly;
   const byOwner = new Map();
-  for (const [id, st] of Object.entries(m.props)) {
-    if (!byOwner.has(st.owner)) byOwner.set(st.owner, []);
-    byOwner.get(st.owner).push(id);
+  for (const [id, ps] of Object.entries(m.props)) {
+    if (!byOwner.has(ps.owner)) byOwner.set(ps.owner, []);
+    byOwner.get(ps.owner).push(id);
   }
   if (byOwner.size === 0) {
     const label = document.createElement('div');
@@ -1552,64 +1879,254 @@ function renderMonoProps(body, a) {
     body.appendChild(label);
     return;
   }
-  const list = document.createElement('div');
-  list.className = 'mono-list';
+  const boardOrder = (x, y) =>
+    MPROPS.findIndex((p) => p.id === x) - MPROPS.findIndex((p) => p.id === y);
   for (const [owner, ids] of [...byOwner.entries()].sort((x, y) => x[0] - y[0])) {
     const op = state.players[owner];
     const head = document.createElement('div');
     head.className = 'mono-owner';
     head.innerHTML = `<span class="cp-dot" style="background:${op.color}"></span>${esc(op.name)}`;
-    list.appendChild(head);
+    body.appendChild(head);
     const mine = !isMp() ? owner === a : (owner === myIdx() || amHost());
-    for (const id of ids.sort((x, y) => MPROPS.findIndex((p) => p.id === x) - MPROPS.findIndex((p) => p.id === y))) {
+    const grid = deedGrid();
+    for (const id of ids.sort(boardOrder)) {
       const def = MPROP[id];
       const ps = m.props[id];
-      const row = document.createElement('div');
-      row.className = 'mono-prop' + (ps.mortgaged ? ' mortgaged' : '');
-      const rent = rentOf(id, m.props);
-      const rentTxt = def.g === 'util'
-        ? T.utilRent
-        : `${T.rentNow} ${fmtM(rent)}`;
-      const houses = ps.houses >= 5 ? '🏨' : (ps.houses > 0 ? '🏠×' + ps.houses : '');
-      row.innerHTML =
-        `<span class="mp-color" style="background:${MGROUPS[def.g].c}"></span>` +
-        `<span class="mp-name">${esc(def.n)} ${houses}</span>` +
-        `<span class="mp-rent">${ps.mortgaged ? '🔒' : rentTxt}</span>`;
-      if (mine) {
-        const ctr = document.createElement('div');
-        ctr.className = 'mp-controls';
-        const hc = MGROUPS[def.g].hc;
-        if (hc && !ps.mortgaged) {
-          const plus = document.createElement('button');
-          plus.className = 'mono-chip';
-          plus.textContent = `+🏠 ${hc}`;
-          plus.onclick = () => { monoDo({ op: 'house', propId: id, delta: 1, cost: hc }); renderMono(); };
-          const minus = document.createElement('button');
-          minus.className = 'mono-chip';
-          minus.textContent = '−🏠';
-          minus.onclick = () => { monoDo({ op: 'house', propId: id, delta: -1, cost: hc }); renderMono(); };
-          ctr.append(plus, minus);
-        }
-        if (ps.houses === 0) {
-          const mort = document.createElement('button');
-          mort.className = 'mono-chip';
-          mort.textContent = (ps.mortgaged ? T.unmortgage : T.mortgage) + ` ${fmtM(def.p / 2)}`;
-          mort.onclick = () => { monoDo({ op: 'mortgage', propId: id, on: !ps.mortgaged, value: def.p / 2 }); renderMono(); };
-          ctr.append(mort);
-          if (!ps.mortgaged) {
-            const sell = document.createElement('button');
-            sell.className = 'mono-chip';
-            sell.textContent = `${T.sellBtn} ${fmtM(def.p)}`;
-            sell.onclick = () => { monoDo({ op: 'sell', propId: id, refund: def.p }); renderMono(); };
-            ctr.append(sell);
-          }
-        }
-        row.appendChild(ctr);
+      grid.appendChild(deedEl(def, ps, {
+        sel: mono.sel === id,
+        onTap: mine ? () => { mono.sel = mono.sel === id ? null : id; renderMono(); } : null,
+      }));
+    }
+    body.appendChild(grid);
+    // controls for the selected own deed
+    if (mine && mono.sel && ids.includes(mono.sel)) {
+      const id = mono.sel;
+      const def = MPROP[id];
+      const ps = m.props[id];
+      const hc = MGROUPS[def.g].hc;
+      const bar = document.createElement('div');
+      bar.className = 'mp-controls';
+      if (hc && !ps.mortgaged) {
+        const plus = document.createElement('button');
+        plus.className = 'mono-chip';
+        plus.textContent = `+🏠 −${fmtM(hc)}`;
+        plus.onclick = () => monoDo({ op: 'house', propId: id, delta: 1, cost: hc });
+        const minus = document.createElement('button');
+        minus.className = 'mono-chip';
+        minus.textContent = `−🏠 +${fmtM(Math.floor(hc / 2))}`;
+        minus.onclick = () => monoDo({ op: 'house', propId: id, delta: -1, cost: hc });
+        bar.append(plus, minus);
       }
-      list.appendChild(row);
+      if (ps.houses === 0) {
+        const mort = document.createElement('button');
+        mort.className = 'mono-chip';
+        mort.textContent = (ps.mortgaged ? T.unmortgage : T.mortgage) + ` ${fmtM(def.p / 2)}`;
+        mort.onclick = () => monoDo({ op: 'mortgage', propId: id, on: !ps.mortgaged, value: def.p / 2 });
+        bar.append(mort);
+        if (!ps.mortgaged) {
+          const sell = document.createElement('button');
+          sell.className = 'mono-chip';
+          sell.textContent = `${T.sellBtn} +${fmtM(def.p)}`;
+          sell.onclick = () => { mono.sel = null; monoDo({ op: 'sell', propId: id, refund: def.p }); };
+          const dis = document.createElement('button');
+          dis.className = 'mono-chip mc-danger';
+          dis.textContent = T.disownBtn;
+          dis.onclick = () => { mono.sel = null; monoDo({ op: 'disown', propId: id }); };
+          bar.append(sell, dis);
+        }
+      }
+      body.appendChild(bar);
     }
   }
-  body.appendChild(list);
+}
+
+// ---- trades ----
+
+function renderMonoTradePartner(body, a) {
+  const label = document.createElement('div');
+  label.className = 'mono-label';
+  label.textContent = T.tradePartner;
+  body.appendChild(label);
+  const chips = document.createElement('div');
+  chips.className = 'mono-chips';
+  for (const { p, i } of alivePlayers()) {
+    if (i === a) continue;
+    const c = document.createElement('button');
+    c.className = 'mono-chip';
+    c.innerHTML = `<span class="cp-dot" style="background:${p.color}"></span>${esc(p.name)}`;
+    c.onclick = () => openMono('trade-build', {
+      actor: a,
+      back: 'trade-partner',
+      draft: { from: a, to: i, give: { props: [], money: 0 }, want: { props: [], money: 0 }, counter: false },
+    });
+    chips.appendChild(c);
+  }
+  body.appendChild(chips);
+}
+
+// One side of the trade builder: the owner's tradable deeds (no houses) as a
+// multi-select grid plus a money input.
+function tradeSideEl(body, ownerIdx, side) {
+  const m = state.monopoly;
+  const p = state.players[ownerIdx];
+  const head = document.createElement('div');
+  head.className = 'mono-owner';
+  head.innerHTML = `<span class="cp-dot" style="background:${p.color}"></span>${esc(T.gives(p.name))}`;
+  body.appendChild(head);
+  const grid = deedGrid('trade');
+  const ids = Object.entries(m.props)
+    .filter(([, ps]) => ps.owner === ownerIdx && ps.houses === 0)
+    .map(([id]) => id);
+  for (const id of ids) {
+    const def = MPROP[id];
+    const ps = m.props[id];
+    const el = deedEl(def, ps, {
+      sel: side.props.includes(id),
+      onTap: () => {
+        const at = side.props.indexOf(id);
+        if (at >= 0) side.props.splice(at, 1);
+        else side.props.push(id);
+        renderMono();
+      },
+    });
+    grid.appendChild(el);
+  }
+  body.appendChild(grid);
+  const row = document.createElement('div');
+  row.className = 'mono-amount-row';
+  const inp = document.createElement('input');
+  inp.type = 'number';
+  inp.inputMode = 'numeric';
+  inp.placeholder = `₺ ${T.amountPh}`;
+  inp.className = 'mono-amount trade-money';
+  inp.value = side.money || '';
+  inp.oninput = () => { side.money = Math.max(0, parseInt(inp.value, 10) || 0); };
+  row.appendChild(inp);
+  body.appendChild(row);
+}
+
+function renderMonoTradeBuild(body, a) {
+  const d = mono.draft;
+  if (!d) { closeMono(); return; }
+  tradeSideEl(body, d.from, d.give);
+  const swap = document.createElement('div');
+  swap.className = 'trade-swap';
+  swap.textContent = '⇅';
+  body.appendChild(swap);
+  tradeSideEl(body, d.to, d.want);
+
+  const go = document.createElement('button');
+  go.className = 'btn btn-start mono-send';
+  go.textContent = T.sendOffer;
+  go.onclick = () => {
+    const m = state.monopoly;
+    if (d.give.money > m.money[d.from] || d.want.money > m.money[d.to]) {
+      monoToast(T.insufficient);
+      return;
+    }
+    const payload = d.counter
+      ? { op: 'tradeCounter', give: d.give, want: d.want }
+      : { op: 'tradeOffer', from: d.from, to: d.to, give: d.give, want: d.want };
+    const err = monoDo(payload);
+    if (err) return;
+    if (isMp()) closeMono();
+    else openMono('trade-review', { actor: state.monopoly.trade ? state.monopoly.trade.decider : a });
+  };
+  body.appendChild(go);
+}
+
+function renderMonoTradeReview(body, a) {
+  const m = state.monopoly;
+  const t = m.trade;
+  if (!t) { closeMono(); return; }
+
+  const sideView = (ownerIdx, side) => {
+    const p = state.players[ownerIdx];
+    const head = document.createElement('div');
+    head.className = 'mono-owner';
+    head.innerHTML = `<span class="cp-dot" style="background:${p.color}"></span>${esc(T.gives(p.name))}`;
+    body.appendChild(head);
+    if (side.props.length) {
+      const grid = deedGrid('trade');
+      for (const id of side.props) {
+        if (MPROP[id]) grid.appendChild(deedEl(MPROP[id], m.props[id], {}));
+      }
+      body.appendChild(grid);
+    }
+    const moneyLine = document.createElement('div');
+    moneyLine.className = 'mono-label trade-money-line';
+    moneyLine.textContent = side.money ? `+ ${fmtM(side.money)}` : (side.props.length ? '' : T.nothing);
+    if (moneyLine.textContent) body.appendChild(moneyLine);
+  };
+
+  sideView(t.from, t.give);
+  const swap = document.createElement('div');
+  swap.className = 'trade-swap';
+  swap.textContent = '⇅';
+  body.appendChild(swap);
+  sideView(t.to, t.want);
+
+  const iDecide = !isMp() || t.decider === myIdx();
+  const actions = document.createElement('div');
+  actions.className = 'trade-actions';
+  if (iDecide) {
+    const acc = document.createElement('button');
+    acc.className = 'btn btn-primary';
+    acc.textContent = T.accept;
+    acc.onclick = () => { const err = monoDo({ op: 'tradeAccept' }); if (!err) closeMono(); };
+    const cnt = document.createElement('button');
+    cnt.className = 'btn btn-ghost';
+    cnt.textContent = T.counterBtn;
+    cnt.onclick = () => openMono('trade-build', {
+      actor: isMp() ? myIdx() : t.decider,
+      draft: {
+        from: t.from, to: t.to,
+        give: { props: [...t.give.props], money: t.give.money },
+        want: { props: [...t.want.props], money: t.want.money },
+        counter: true,
+      },
+    });
+    actions.append(acc, cnt);
+  }
+  const rej = document.createElement('button');
+  rej.className = 'btn btn-ghost';
+  rej.textContent = T.reject;
+  rej.onclick = () => { monoDo({ op: 'tradeReject', player: a }); closeMono(); };
+  actions.append(rej);
+  body.appendChild(actions);
+}
+
+// ---- bankruptcy ----
+
+function renderMonoBankrupt(body, a) {
+  const label = document.createElement('div');
+  label.className = 'mono-label bankrupt-warn';
+  label.textContent = T.bankruptTitle;
+  body.appendChild(label);
+
+  const market = document.createElement('button');
+  market.className = 'mono-btn';
+  market.textContent = T.toMarket;
+  market.onclick = () => { monoDo({ op: 'bankrupt', player: a, creditor: null }); closeMono(); };
+  body.appendChild(market);
+
+  const cred = document.createElement('button');
+  cred.className = 'mono-btn';
+  cred.textContent = T.toCreditor;
+  body.appendChild(cred);
+  const chips = document.createElement('div');
+  chips.className = 'mono-chips';
+  chips.hidden = true;
+  for (const { p, i } of alivePlayers()) {
+    if (i === a) continue;
+    const c = document.createElement('button');
+    c.className = 'mono-chip';
+    c.innerHTML = `<span class="cp-dot" style="background:${p.color}"></span>${esc(p.name)}`;
+    c.onclick = () => { monoDo({ op: 'bankrupt', player: a, creditor: i }); closeMono(); };
+    chips.appendChild(c);
+  }
+  cred.onclick = () => { chips.hidden = !chips.hidden; };
+  body.appendChild(chips);
 }
 
 // Net worth: cash + property value (half if mortgaged) + houses at cost.
@@ -1707,13 +2224,7 @@ $('rematch-btn').onclick = () => {
     rounds: [],
     entries: Array(src.players.length).fill(null),
     status: 'playing',
-    monopoly: src.mode === 'monopoly' ? {
-      money: src.players.map(() => src.startMoney ?? 1500),
-      jail: src.players.map(() => false),
-      props: {},
-      turn: 0,
-      log: [],
-    } : null,
+    monopoly: src.mode === 'monopoly' ? freshMono(src.players.length, src.startMoney ?? 1500) : null,
     startedAt: Date.now(),
     finishedAt: null,
   };
@@ -1876,6 +2387,7 @@ async function initUpdates() {
 
 function boot() {
   applyI18n();
+  document.body.dataset.theme = THEME;
   state = loadJSON(LS_CURRENT, null);
   mpc = loadJSON(LS_MP, null);
 
@@ -1885,7 +2397,7 @@ function boot() {
   $('lowest-wins').checked = !!p.lowestWins;
   renderPresets();
   renderPlayers();
-  renderMpToggle();
+  renderThemeRow();
   renderResume();
   renderHistory();
 

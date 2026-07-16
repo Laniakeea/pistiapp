@@ -14,10 +14,25 @@ automatically when the last player commits. Server-authoritative state in
 `mp_games` (SQLite), synced by HTTP long-poll (`/api/mp/*`, ~25s holds).
 
 **Monopoly mode** (🎩): the app is the bank — per-player cash, the Monopoly
-Türkiye board (Giresun on top), houses, mortgage, jail, and turns. Transfers
-player↔player and player↔bank, rent lookup per property, net-worth reveal.
-Works solo (one phone = banker) and multiplayer (each player manages their
-own money; the host is the banker override).
+Türkiye board (Giresun on top; transports Tramvay/Havaalanı/Deniz Limanı/Metro,
+utilities Telekom/Doğalgaz), houses, mortgage, a 3-round jail counter, and
+turns. A grid action sheet with deed cards: transfers player↔player and
+player↔bank, **trades** (offer → counter-offer → accept, money + properties
+both ways), mortgage/sell/disown, house building (demolish refunds 50%),
+**bankruptcy** (to the market or to a chosen creditor, eliminated players skip
+the rotation, last one standing wins), and a net-worth reveal. Balances can't
+go negative. Works solo (one phone = banker) and multiplayer (each player
+manages their own money and passes only their own turn).
+
+**Menu & looks**: multiplayer is now two explicit buttons ("Lobi kur" /
+"Çok oyunculu oyuna katıl") that open a name/code modal. Four table themes
+(yeşil, mavi, bordo, gece), a rounded-rectangle table, and geometric meeple
+player figures.
+
+**Dost Kazığı** (🗡️): card-rank tap buttons where the 3s use a per-count
+scoring table (1→3, 2→6, 3→90, 4→270) — the `map` field on an item. Custom
+games can still define arbitrary buttons with simpler `every-N → points`
+combos.
 
 Served at `resonateapp.online/pisti` (port 8789, systemd unit `pisti`).
 

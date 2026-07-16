@@ -88,13 +88,52 @@ function finish(st) {
   st.finishedAt = Date.now();
 }
 
-// Monopoly ledger. Mirrored client-side for solo games — keep both in sync.
-// Returns an error string or null. `a` fields: op, from, to, amount, propId,
-// price, refund, delta, cost, on, value, player.
+// Monopoly ledger. Mirrored client-side for solo games (applyMonoLocal in
+// public/app.js) — keep both in sync. Returns an error string or null.
+// Rules: balances never go negative; demolishing a house refunds 50%;
+// only the turn holder passes the turn (no host override); bankrupt players
+// are out of rotation.
+
+const jailN = (v) => (typeof v === 'number' ? Math.max(0, v) : (v ? 3 : 0));
+
+// Older games stored jail as booleans and predate bankrupt/trade — coerce.
+function ensureMonoShape(st) {
+  const m = st.monopoly;
+  if (!m) return;
+  if (!Array.isArray(m.bankrupt)) m.bankrupt = st.players.map(() => false);
+  m.jail = m.jail.map(jailN);
+  if (m.trade === undefined) m.trade = null;
+}
+
+function nextTurn(m, n) {
+  for (let k = 1; k <= n; k++) {
+    const t = (m.turn + k) % n;
+    if (!m.bankrupt[t]) return t;
+  }
+  return m.turn;
+}
+
+function solventCount(st) {
+  return st.players.filter((_, i) => !st.monopoly.bankrupt[i]).length;
+}
+
+function cleanSide(side) {
+  return {
+    props: Array.isArray(side && side.props) ? side.props.slice(0, 30).map(String) : [],
+    money: Math.floor(Math.abs((side && side.money) || 0)),
+  };
+}
+
+// Every listed property must belong to `owner` and carry no houses.
+function sideOwned(m, side, owner) {
+  return side.props.every((id) => m.props[id] && m.props[id].owner === owner && m.props[id].houses === 0);
+}
+
 function applyMono(st, actorIdx, isHost, a) {
+  ensureMonoShape(st);
   const m = st.monopoly;
   const n = st.players.length;
-  const idxOk = (i) => Number.isInteger(i) && i >= 0 && i < n;
+  const alive = (i) => Number.isInteger(i) && i >= 0 && i < n && !m.bankrupt[i];
   const may = (i) => isHost || i === actorIdx;
   const amt = Math.floor(Math.abs(a.amount || 0));
 
@@ -102,14 +141,15 @@ function applyMono(st, actorIdx, isHost, a) {
     case 'transfer': {
       const from = a.from === 'bank' ? 'bank' : a.from;
       const to = a.to === 'bank' ? 'bank' : a.to;
-      if (from !== 'bank' && !idxOk(from)) return 'bad from';
-      if (to !== 'bank' && !idxOk(to)) return 'bad to';
+      if (from !== 'bank' && !alive(from)) return 'bad from';
+      if (to !== 'bank' && !alive(to)) return 'bad to';
       if (from === to) return 'same account';
       if (!amt) return 'bad amount';
       // moving money out of a player's pocket (or pulling from the bank into
       // your own) is a self-or-host action
       if (from !== 'bank' && !may(from)) return 'not yours';
       if (from === 'bank' && to !== 'bank' && !may(to)) return 'not yours';
+      if (from !== 'bank' && m.money[from] < amt) return 'insufficient';
       if (from !== 'bank') m.money[from] -= amt;
       if (to !== 'bank') m.money[to] += amt;
       log(m, { op: 'transfer', from, to, amount: amt });
@@ -117,9 +157,10 @@ function applyMono(st, actorIdx, isHost, a) {
     }
     case 'buy': {
       const who = a.player ?? actorIdx;
-      if (!idxOk(who) || !may(who)) return 'not yours';
+      if (!alive(who) || !may(who)) return 'not yours';
       if (!a.propId || m.props[a.propId]) return 'unavailable';
       const price = Math.floor(Math.abs(a.price || 0));
+      if (m.money[who] < price) return 'insufficient';
       m.props[a.propId] = { owner: who, houses: 0, mortgaged: false };
       m.money[who] -= price;
       log(m, { op: 'buy', player: who, propId: a.propId, amount: price });
@@ -128,10 +169,20 @@ function applyMono(st, actorIdx, isHost, a) {
     case 'sell': {
       const p = m.props[a.propId];
       if (!p || !may(p.owner)) return 'not yours';
+      if (p.houses > 0) return 'has houses';
       const refund = Math.floor(Math.abs(a.refund || 0));
       delete m.props[a.propId];
       m.money[p.owner] += refund;
       log(m, { op: 'sell', player: p.owner, propId: a.propId, amount: refund });
+      return null;
+    }
+    case 'disown': {
+      // release a property back to the market with NO cashback
+      const p = m.props[a.propId];
+      if (!p || !may(p.owner)) return 'not yours';
+      if (p.houses > 0) return 'has houses';
+      delete m.props[a.propId];
+      log(m, { op: 'disown', player: p.owner, propId: a.propId });
       return null;
     }
     case 'house': {
@@ -141,8 +192,13 @@ function applyMono(st, actorIdx, isHost, a) {
       const next = p.houses + delta;
       if (next < 0 || next > 5) return 'out of range';
       const cost = Math.floor(Math.abs(a.cost || 0));
+      if (delta > 0) {
+        if (m.money[p.owner] < cost) return 'insufficient';
+        m.money[p.owner] -= cost;
+      } else {
+        m.money[p.owner] += Math.floor(cost / 2); // demolition refunds 50%
+      }
       p.houses = next;
-      m.money[p.owner] -= delta * cost;
       log(m, { op: 'house', player: p.owner, propId: a.propId, houses: next });
       return null;
     }
@@ -151,6 +207,7 @@ function applyMono(st, actorIdx, isHost, a) {
       if (!p || !may(p.owner)) return 'not yours';
       const value = Math.floor(Math.abs(a.value || 0));
       if (!!p.mortgaged === !!a.on) return 'no change';
+      if (!a.on && m.money[p.owner] < value) return 'insufficient';
       p.mortgaged = !!a.on;
       m.money[p.owner] += a.on ? value : -value;
       log(m, { op: 'mortgage', player: p.owner, propId: a.propId, on: !!a.on, amount: value });
@@ -158,15 +215,90 @@ function applyMono(st, actorIdx, isHost, a) {
     }
     case 'jail': {
       const who = a.player ?? actorIdx;
-      if (!idxOk(who) || !may(who)) return 'not yours';
-      m.jail[who] = !!a.on;
+      if (!alive(who) || !may(who)) return 'not yours';
+      m.jail[who] = a.on ? 3 : 0;
       log(m, { op: 'jail', player: who, on: !!a.on });
       return null;
     }
     case 'turn': {
-      if (!(isHost || m.turn === actorIdx)) return 'not your turn';
-      m.turn = (m.turn + 1) % n;
+      if (m.turn !== actorIdx) return 'not your turn';
+      if (m.jail[m.turn] > 0) m.jail[m.turn]--; // a pass counts a jail round
+      m.turn = nextTurn(m, n);
       log(m, { op: 'turn', player: m.turn });
+      return null;
+    }
+    case 'bankrupt': {
+      const who = a.player ?? actorIdx;
+      if (!alive(who) || !may(who)) return 'not yours';
+      const creditor = Number.isInteger(a.creditor) && alive(a.creditor) && a.creditor !== who
+        ? a.creditor : null;
+      for (const [id, p] of Object.entries(m.props)) {
+        if (p.owner !== who) continue;
+        if (creditor !== null) {
+          p.owner = creditor;
+          p.houses = 0; // houses vanish, no refund
+        } else {
+          delete m.props[id];
+        }
+      }
+      if (creditor !== null) m.money[creditor] += m.money[who];
+      m.money[who] = 0;
+      m.jail[who] = 0;
+      m.bankrupt[who] = true;
+      if (m.trade && (m.trade.from === who || m.trade.to === who)) m.trade = null;
+      if (m.turn === who) m.turn = nextTurn(m, n);
+      log(m, { op: 'bankrupt', player: who, creditor });
+      return null;
+    }
+    case 'tradeOffer': {
+      if (m.trade) return 'trade pending';
+      const to = a.to;
+      if (!alive(to) || to === actorIdx) return 'bad partner';
+      const give = cleanSide(a.give);
+      const want = cleanSide(a.want);
+      const from = actorIdx;
+      if (!sideOwned(m, give, from)) return 'not yours';
+      if (!sideOwned(m, want, to)) return 'not theirs';
+      if (give.money > m.money[from]) return 'insufficient';
+      m.trade = { from, to, give, want, decider: to };
+      log(m, { op: 'trade', player: from, to });
+      return null;
+    }
+    case 'tradeCounter': {
+      const t = m.trade;
+      if (!t) return 'no trade';
+      if (t.decider !== actorIdx) return 'not your call';
+      const give = cleanSide(a.give); // still expressed from t.from's side
+      const want = cleanSide(a.want);
+      if (!sideOwned(m, give, t.from) || !sideOwned(m, want, t.to)) return 'bad props';
+      t.give = give;
+      t.want = want;
+      t.decider = t.decider === t.from ? t.to : t.from;
+      log(m, { op: 'trade', player: t.decider === t.from ? t.to : t.from, to: t.decider });
+      return null;
+    }
+    case 'tradeAccept': {
+      const t = m.trade;
+      if (!t) return 'no trade';
+      if (t.decider !== actorIdx) return 'not your call';
+      if (!sideOwned(m, t.give, t.from) || !sideOwned(m, t.want, t.to)) return 'bad props';
+      const fromNet = t.want.money - t.give.money;
+      const toNet = t.give.money - t.want.money;
+      if (m.money[t.from] + fromNet < 0 || m.money[t.to] + toNet < 0) return 'insufficient';
+      for (const id of t.give.props) m.props[id].owner = t.to;
+      for (const id of t.want.props) m.props[id].owner = t.from;
+      m.money[t.from] += fromNet;
+      m.money[t.to] += toNet;
+      m.trade = null;
+      log(m, { op: 'tradeDone', player: t.from, to: t.to });
+      return null;
+    }
+    case 'tradeReject': {
+      const t = m.trade;
+      if (!t) return 'no trade';
+      if (t.from !== actorIdx && t.to !== actorIdx && !isHost) return 'not your call';
+      m.trade = null;
+      log(m, { op: 'tradeOff', player: actorIdx });
       return null;
     }
     default:
@@ -264,8 +396,10 @@ async function action(req, res, code) {
       if (st.mode === 'monopoly') {
         st.monopoly = {
           money: st.players.map(() => st.startMoney),
-          jail: st.players.map(() => false),
+          jail: st.players.map(() => 0),
+          bankrupt: st.players.map(() => false),
           props: {},
+          trade: null,
           turn: 0,
           log: [],
         };
@@ -297,6 +431,8 @@ async function action(req, res, code) {
       }
       const err = applyMono(st, idx, isHost, body);
       if (err) return sendJson(res, 400, { error: err });
+      // last player standing wins
+      if (solventCount(st) <= 1) finish(st);
       break;
     }
     default:

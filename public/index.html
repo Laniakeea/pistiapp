@@ -52,19 +52,6 @@
         </div>
       </div>
 
-      <!-- join an existing lobby -->
-      <div class="paper-note join-note">
-        <div class="rn-text">
-          <strong data-t="joinTitle">Join a game</strong>
-          <div class="join-row">
-            <input id="join-name" maxlength="16" data-tp="yourNamePh" placeholder="name">
-            <input id="join-code" inputmode="numeric" maxlength="6" data-tp="joinCodePh" placeholder="code">
-            <button id="join-btn" class="btn btn-primary" data-t="joinBtn">Join</button>
-          </div>
-          <span id="join-error" class="join-error" hidden></span>
-        </div>
-      </div>
-
       <div class="paper-form">
         <h2 class="ph" data-t="pickGame">Pick a game</h2>
         <div id="preset-grid" class="preset-grid"></div>
@@ -79,15 +66,6 @@
           <button id="custom-add" class="btn btn-ghost custom-add" data-t="addButton">+ Add button</button>
         </div>
 
-        <h2 class="ph" data-t="mpHeading">Play together</h2>
-        <div class="rules-row">
-          <label class="toggle">
-            <input id="mp-toggle" type="checkbox">
-            <span class="knob"></span>
-            <span class="tlabel" data-t="mpToggle">Multiplayer (everyone on their own phone)</span>
-          </label>
-        </div>
-
         <div id="solo-players">
           <h2 class="ph"><span data-t="players">Players</span> <span id="pcount-label" class="pcount"></span></h2>
           <div class="stepper">
@@ -96,16 +74,6 @@
             <button id="pplus" class="step-btn" aria-label="more players">+</button>
           </div>
           <div id="player-names" class="player-names"></div>
-        </div>
-
-        <div id="mp-name-wrap" hidden>
-          <h2 class="ph" data-t="yourName">Your name</h2>
-          <div class="player-names">
-            <div class="pname-row">
-              <span class="pname-chip" id="mp-name-chip" style="background:#e05555">?</span>
-              <input id="mp-name" maxlength="16" data-tp="yourNamePh" placeholder="name">
-            </div>
-          </div>
         </div>
 
         <div id="score-rules">
@@ -137,7 +105,14 @@
           </div>
         </div>
 
+        <h2 class="ph" data-t="theme">Theme</h2>
+        <div id="theme-row" class="theme-row"></div>
+
         <button id="start-btn" class="btn btn-start" data-t="startBtn">Deal me in ▸</button>
+        <div class="mp-btn-row">
+          <button id="mp-create-btn" class="btn btn-ghost mp-btn" data-t="mpCreateBtn">🌐 Create lobby</button>
+          <button id="mp-join-btn" class="btn btn-ghost mp-btn" data-t="mpJoinBtn">🔗 Join a multiplayer game</button>
+        </div>
       </div>
 
       <div id="history-wrap" hidden>
@@ -147,6 +122,26 @@
       <footer class="setup-foot" data-t="footer">made for game night 🂡</footer>
     </div>
   </section>
+
+  <!-- ============ MP NAME/CODE MODAL ============ -->
+  <div id="mp-modal" class="modal-overlay" hidden>
+    <div class="modal-card">
+      <h2 class="ph" id="mp-modal-title"></h2>
+      <label class="field modal-field">
+        <span data-t="yourName">Your name</span>
+        <input id="mp-modal-name" maxlength="16" data-tp="yourNamePh" placeholder="name">
+      </label>
+      <label class="field modal-field" id="mp-modal-code-wrap">
+        <span data-t="lobbyCodeLabel">Room code</span>
+        <input id="mp-modal-code" inputmode="numeric" maxlength="6" data-tp="joinCodePh" placeholder="code">
+      </label>
+      <span id="mp-modal-error" class="join-error" hidden></span>
+      <div class="modal-actions">
+        <button id="mp-modal-cancel" class="btn btn-ghost" data-t="cancel">Cancel</button>
+        <button id="mp-modal-go" class="btn btn-primary"></button>
+      </div>
+    </div>
+  </div>
 
   <!-- ============ LOBBY ============ -->
   <section id="screen-lobby" class="screen" hidden>
@@ -190,6 +185,7 @@
             <div class="mpad-turn-label" data-t="turnLabel">turn</div>
             <div class="mpad-turn" id="mpad-turn"></div>
             <button id="mpad-endturn" class="btn mpad-endturn" data-t="endTurn">🎲 End turn</button>
+            <button id="mpad-trade" class="btn mpad-trade" hidden></button>
             <div class="mpad-log" id="mpad-log"></div>
           </div>
         </div>
