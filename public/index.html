@@ -52,34 +52,89 @@
         </div>
       </div>
 
+      <!-- join an existing lobby -->
+      <div class="paper-note join-note">
+        <div class="rn-text">
+          <strong data-t="joinTitle">Join a game</strong>
+          <div class="join-row">
+            <input id="join-name" maxlength="16" data-tp="yourNamePh" placeholder="name">
+            <input id="join-code" inputmode="numeric" maxlength="6" data-tp="joinCodePh" placeholder="code">
+            <button id="join-btn" class="btn btn-primary" data-t="joinBtn">Join</button>
+          </div>
+          <span id="join-error" class="join-error" hidden></span>
+        </div>
+      </div>
+
       <div class="paper-form">
         <h2 class="ph" data-t="pickGame">Pick a game</h2>
         <div id="preset-grid" class="preset-grid"></div>
 
         <div id="custom-editor" hidden>
-          <h2 class="ph" data-t="customButtons">Custom bonus buttons</h2>
+          <h2 class="ph" data-t="customButtons">Custom buttons</h2>
+          <div class="custom-head">
+            <span data-t="chLabel">Label</span><span data-t="chPts">Pts</span>
+            <span data-t="chEvery">every N</span><span data-t="chCombo">→ pts</span><span></span>
+          </div>
           <div id="custom-rows"></div>
+          <button id="custom-add" class="btn btn-ghost custom-add" data-t="addButton">+ Add button</button>
         </div>
 
-        <h2 class="ph"><span data-t="players">Players</span> <span id="pcount-label" class="pcount"></span></h2>
-        <div class="stepper">
-          <button id="pminus" class="step-btn" aria-label="fewer players">−</button>
-          <div id="pdots" class="pdots"></div>
-          <button id="pplus" class="step-btn" aria-label="more players">+</button>
-        </div>
-        <div id="player-names" class="player-names"></div>
-
-        <h2 class="ph" data-t="rules">Rules</h2>
+        <h2 class="ph" data-t="mpHeading">Play together</h2>
         <div class="rules-row">
-          <label class="field">
-            <span data-t="playTo">Play to (points)</span>
-            <input id="target-input" type="number" inputmode="numeric" data-tp="noLimit" placeholder="no limit">
-          </label>
           <label class="toggle">
-            <input id="lowest-wins" type="checkbox">
+            <input id="mp-toggle" type="checkbox">
             <span class="knob"></span>
-            <span class="tlabel" data-t="lowestWins">Lowest score wins</span>
+            <span class="tlabel" data-t="mpToggle">Multiplayer (everyone on their own phone)</span>
           </label>
+        </div>
+
+        <div id="solo-players">
+          <h2 class="ph"><span data-t="players">Players</span> <span id="pcount-label" class="pcount"></span></h2>
+          <div class="stepper">
+            <button id="pminus" class="step-btn" aria-label="fewer players">−</button>
+            <div id="pdots" class="pdots"></div>
+            <button id="pplus" class="step-btn" aria-label="more players">+</button>
+          </div>
+          <div id="player-names" class="player-names"></div>
+        </div>
+
+        <div id="mp-name-wrap" hidden>
+          <h2 class="ph" data-t="yourName">Your name</h2>
+          <div class="player-names">
+            <div class="pname-row">
+              <span class="pname-chip" id="mp-name-chip" style="background:#e05555">?</span>
+              <input id="mp-name" maxlength="16" data-tp="yourNamePh" placeholder="name">
+            </div>
+          </div>
+        </div>
+
+        <div id="score-rules">
+          <h2 class="ph" data-t="rules">Rules</h2>
+          <div class="rules-row">
+            <label class="field">
+              <span data-t="playTo">Play to (points)</span>
+              <input id="target-input" type="number" inputmode="numeric" data-tp="noLimit" placeholder="no limit">
+            </label>
+            <label class="field">
+              <span data-t="maxRounds">Rounds</span>
+              <input id="rounds-input" type="number" inputmode="numeric" min="1" max="99" data-tp="noLimit" placeholder="no limit">
+            </label>
+            <label class="toggle">
+              <input id="lowest-wins" type="checkbox">
+              <span class="knob"></span>
+              <span class="tlabel" data-t="lowestWins">Lowest score wins</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="mono-rules" hidden>
+          <h2 class="ph" data-t="rules">Rules</h2>
+          <div class="rules-row">
+            <label class="field">
+              <span data-t="startMoney">Starting money</span>
+              <input id="money-input" type="number" inputmode="numeric" value="1500">
+            </label>
+          </div>
         </div>
 
         <button id="start-btn" class="btn btn-start" data-t="startBtn">Deal me in ▸</button>
@@ -90,6 +145,24 @@
         <div id="history-list"></div>
       </div>
       <footer class="setup-foot" data-t="footer">made for game night 🂡</footer>
+    </div>
+  </section>
+
+  <!-- ============ LOBBY ============ -->
+  <section id="screen-lobby" class="screen" hidden>
+    <div class="setup-scroll">
+      <div class="paper-form lobby-paper">
+        <h2 class="ph" data-t="lobbyTitle">Lobby</h2>
+        <div class="lobby-game" id="lobby-game"></div>
+        <div class="lobby-code-label" data-t="lobbyCodeLabel">Room code</div>
+        <div class="lobby-code" id="lobby-code">000000</div>
+        <div class="lobby-hint" data-t="lobbyHint">Friends join with this code</div>
+        <h2 class="ph" data-t="players">Players</h2>
+        <div id="lobby-players" class="lobby-players"></div>
+        <button id="lobby-start" class="btn btn-start" data-t="lobbyStart" hidden>Start game ▸</button>
+        <div id="lobby-waiting" class="lobby-waiting" data-t="lobbyWaiting" hidden>Waiting for the host…</div>
+        <button id="lobby-leave" class="btn btn-ghost lobby-leave" data-t="lobbyLeave">Leave</button>
+      </div>
     </div>
   </section>
 
@@ -109,6 +182,17 @@
           </div>
           <div class="pad-pencil" aria-hidden="true">✏️</div>
         </div>
+        <!-- monopoly variant of the pad -->
+        <div id="mpad" class="pad mpad" hidden>
+          <div class="pad-clip"></div>
+          <div class="pad-paper">
+            <div class="pad-game" data-t="bank">BANK</div>
+            <div class="mpad-turn-label" data-t="turnLabel">turn</div>
+            <div class="mpad-turn" id="mpad-turn"></div>
+            <button id="mpad-endturn" class="btn mpad-endturn" data-t="endTurn">🎲 End turn</button>
+            <div class="mpad-log" id="mpad-log"></div>
+          </div>
+        </div>
         <button id="commit-round" class="btn btn-commit" hidden data-t="commitRound">Score round ✓</button>
       </div>
       <div id="seats"></div>
@@ -116,19 +200,44 @@
     <div class="table-controls">
       <button id="home-btn" class="tc-btn" title="back to setup">☰</button>
       <button id="peek-btn" class="tc-btn" title="hold to peek totals">👁</button>
+      <div id="mp-code-chip" class="mp-code-chip" hidden></div>
       <button id="finish-btn" class="tc-btn tc-finish" data-t="finishBtn">🏁 Finish</button>
     </div>
     <div id="peek-sheet" class="peek-sheet" hidden></div>
     <div id="round-stamp" class="round-stamp" hidden></div>
   </section>
 
-  <!-- ============ CALCULATOR ============ -->
-  <div id="calc-overlay" hidden>
+  <!-- ============ ENTRY PAD (primary input) ============ -->
+  <div id="entry-overlay" class="sheet-overlay" hidden>
+    <div class="entry-sheet">
+      <div class="calc-head">
+        <span id="entry-player" class="calc-player"></span>
+        <span class="calc-head-btns">
+          <button id="entry-rename" class="calc-close" aria-label="rename player" title="rename player">✏️</button>
+          <button id="entry-calc" class="calc-close" aria-label="calculator" title="calculator">🖩</button>
+          <button id="entry-close" class="calc-close" aria-label="close">✕</button>
+        </span>
+      </div>
+      <div class="entry-total-row">
+        <div id="entry-tape" class="entry-tape"></div>
+        <div id="entry-total" class="entry-total">0</div>
+      </div>
+      <div id="entry-items" class="entry-items"></div>
+      <div class="entry-actions">
+        <button id="entry-clear" class="key key-fn">C</button>
+        <button id="entry-undo" class="key key-fn">⌫</button>
+        <button id="entry-ok" class="key key-ok" data-t="okBtn">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CALCULATOR (secondary) ============ -->
+  <div id="calc-overlay" class="sheet-overlay" hidden>
     <div id="calc" class="calc">
       <div class="calc-head">
         <span id="calc-player" class="calc-player"></span>
         <span class="calc-head-btns">
-          <button id="calc-rename" class="calc-close" aria-label="rename player" title="rename player">✏️</button>
+          <button id="calc-back" class="calc-close" aria-label="back to buttons" title="back">🃏</button>
           <button id="calc-close" class="calc-close" aria-label="close">✕</button>
         </span>
       </div>
@@ -154,6 +263,20 @@
         <button class="key" data-d="0">0</button>
         <button class="key key-ok" data-op="ok" id="calc-ok">OK</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ============ MONOPOLY ACTIONS ============ -->
+  <div id="mono-overlay" class="sheet-overlay" hidden>
+    <div class="mono-sheet">
+      <div class="calc-head">
+        <span id="mono-title" class="calc-player"></span>
+        <span class="calc-head-btns">
+          <button id="mono-back" class="calc-close" aria-label="back" hidden>‹</button>
+          <button id="mono-close" class="calc-close" aria-label="close">✕</button>
+        </span>
+      </div>
+      <div id="mono-body" class="mono-body"></div>
     </div>
   </div>
 

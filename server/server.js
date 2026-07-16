@@ -14,6 +14,8 @@ const crypto = require('node:crypto');
 
 const { PORT, HOST, BASE_PATH } = require('./config');
 const db = require('./db');
+const mp = require('./mp');
+const { sendJson, readBody } = require('./util');
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
@@ -28,29 +30,6 @@ const MIME = {
   '.ico': 'image/x-icon',
   '.woff2': 'font/woff2',
 };
-
-function sendJson(res, status, obj) {
-  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
-  res.end(JSON.stringify(obj));
-}
-
-function readBody(req) {
-  return new Promise((resolve) => {
-    let data = '';
-    req.on('data', (c) => {
-      data += c;
-      if (data.length > 1e6) req.destroy(); // basic guard
-    });
-    req.on('end', () => {
-      try {
-        resolve(data ? JSON.parse(data) : {});
-      } catch {
-        resolve(null);
-      }
-    });
-    req.on('error', () => resolve(null));
-  });
-}
 
 // ---- static files ----------------------------------------------------------
 
@@ -91,8 +70,12 @@ function serveStatic(req, res, rel) {
 
 const ID_RE = /^[a-f0-9]{16}$/;
 
-async function handleApi(req, res, rel) {
+async function handleApi(req, res, rel, query) {
   if (rel === '/health') return sendJson(res, 200, { ok: true, app: 'pisti' });
+
+  if (rel.startsWith('/mp/') || rel === '/mp') {
+    return mp.handle(req, res, rel.slice(3), query);
+  }
 
   if (rel === '/games' && req.method === 'POST') {
     const body = await readBody(req);
@@ -143,7 +126,7 @@ const server = http.createServer((req, res) => {
   p = p.slice(BASE_PATH.length); // "/", "/app.js", "/api/health", ...
 
   if (p.startsWith('/api/')) {
-    handleApi(req, res, p.slice(4)).catch((e) => {
+    handleApi(req, res, p.slice(4), url.searchParams).catch((e) => {
       console.error('api error', e);
       sendJson(res, 500, { error: 'internal' });
     });
